@@ -7,6 +7,9 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.6.2"
   },
+  "scripts": {
+    "dev": "nodemon server.js"
+  },
   "devDependencies": {
     "nodemon": "^3.1.14"
   }
