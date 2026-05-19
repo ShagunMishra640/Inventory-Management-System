@@ -2,10 +2,12 @@ const router = require("express").Router();
 
 const { register, login } = require("../controllers/auth.controller");
 
-const validator = require("../middlewares/validator");
+router.get("/", (req, res) => {
+  res.send("Auth Route Working");
+});
 
-router.post("/register", validator, register);
+router.post("/register", register);
 
-router.post("/login", validator, login);
+router.post("/login", login);
 
 module.exports = router;
