@@ -4,7 +4,6 @@ const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
       trim: true,
     },
     email: {
@@ -20,11 +19,11 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
+      trim: true,
       default: "",
     },
     role: {
       type: String,
-      enum: ["admin", "cashier", "inventoryManager"],
       default: "cashier",
     },
     isActive: {
@@ -34,8 +33,7 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 module.exports = mongoose.model("User", userSchema);
-
