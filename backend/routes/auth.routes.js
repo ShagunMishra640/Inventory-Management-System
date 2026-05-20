@@ -1,7 +1,6 @@
 const router = require("express").Router();
 
-// Changed from "../controllers/auth.controller" to "../controllers/authController"
-const { register, login } = require("../controllers/authController");
+const { register, login } = require("../controllers/auth.controller");
 
 router.get("/", (req, res) => {
   res.send("Auth Route Working");
