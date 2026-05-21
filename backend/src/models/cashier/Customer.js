@@ -1,39 +1,40 @@
+// Stores customer information
+
 const mongoose = require("mongoose");
 
-const userSchema = new mongoose.Schema(
+const customerSchema = new mongoose.Schema(
   {
     name: {
       type: String,
+      required: true,
       trim: true,
     },
+
     email: {
       type: String,
       required: true,
       unique: true,
       lowercase: true,
-      trim: true,
     },
-    password: {
+
+    phone: {
       type: String,
       required: true,
     },
-    phone: {
+
+    address: {
       type: String,
-      trim: true,
       default: "",
     },
-    role: {
-      type: String,
-      default: "cashier",
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
+
+    loyaltyPoints: {
+      type: Number,
+      default: 0,
     },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-module.exports = mongoose.model("User", userSchema);
+module.exports = mongoose.model("Customer", customerSchema);

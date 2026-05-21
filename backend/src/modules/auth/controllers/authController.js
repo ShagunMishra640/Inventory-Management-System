@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const User = require("../../models/User");
+const User = require("../../../models/auth/User");
 
 const register = async (req, res) => {
   try {
@@ -8,7 +8,9 @@ const register = async (req, res) => {
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists with this email" });
+      return res
+        .status(400)
+        .json({ message: "User already exists with this email" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -46,16 +48,22 @@ const login = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: "Invalid credentials (User not found)" });
+      return res
+        .status(400)
+        .json({ message: "Invalid credentials (User not found)" });
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
-      return res.status(400).json({ message: "Invalid credentials (Wrong password)" });
+      return res
+        .status(400)
+        .json({ message: "Invalid credentials (Wrong password)" });
     }
 
     if (!user.isActive) {
-      return res.status(403).json({ message: "Your account is deactivated. Please contact an admin." });
+      return res.status(403).json({
+        message: "Your account is deactivated. Please contact an admin.",
+      });
     }
 
     const token = jwt.sign(
