@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 // Imports your compiled User model directly
-const User = require("../models/User");
+const User = require("../../../models/auth/User");
 
 // Register Controller
 const register = async (req, res) => {

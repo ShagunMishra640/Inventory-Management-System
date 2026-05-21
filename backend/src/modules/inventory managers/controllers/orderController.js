@@ -1,6 +1,18 @@
-﻿const Order = require("../../models/Order");
+﻿const Order = require("../../admin/models/Order");
+
+const createOrder = async (req, res) => {
   try {
-    const { productName, customerName, quantity, price, status } = req.body;
+    // accept either `productName` or `product` in request body
+    const {
+      productName: pn,
+      product: pAlias,
+      customerName,
+      quantity,
+      price,
+      status,
+    } = req.body;
+
+    const productName = pn || pAlias;
 
     if (!productName || !quantity || !price) {
       return res.status(400).json({ message: "productName, quantity and price are required" });
