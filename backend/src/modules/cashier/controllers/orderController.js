@@ -1,4 +1,12 @@
+<<<<<<< HEAD
 ﻿// manage customer orders
+=======
+﻿const Order = require("../../admin/models/Order");
+
+const createOrder = async (req, res) => {
+  try {
+    const { productName, customerName, quantity, price, status } = req.body;
+>>>>>>> 4e31da7eac91c44b1e29d803566903314d3bfa9c
 
 const Order = require("../../../models/cashier/Order");
 
