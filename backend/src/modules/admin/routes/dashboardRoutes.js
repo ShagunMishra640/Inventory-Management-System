@@ -1,5 +1,4 @@
 const express = require("express");
-
 const router = express.Router();
 
 const {
@@ -8,5 +7,9 @@ const {
 
 // GET Dashboard Data
 router.get("/", getDashboardStats);
+
+// API ROUTE
+router.get("/stats", getDashboardStats);
+
 
 module.exports = router;
