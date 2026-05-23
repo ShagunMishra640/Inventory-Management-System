@@ -9,7 +9,6 @@ const PurchaseOrder = require("../../../models/inventaryManagers/PurchaseOrder")
 
 const getDashboardStats = async (req, res) => {
   try {
-
     // Total Counts
     const totalProducts = await Product.countDocuments();
 
@@ -35,7 +34,6 @@ const getDashboardStats = async (req, res) => {
         lowStockProducts,
       },
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
