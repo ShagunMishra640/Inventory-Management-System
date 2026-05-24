@@ -28,14 +28,20 @@ const {
 
 // ================= CREATE PRODUCT =================
 
-router.post(
-  "/",
+const createProductMiddlewares = [
   protect,
   authorizeRoles("admin", "inventory-manager"),
   createProductValidation,
   validationMiddleware,
   createProduct,
+];
+
+router.post(
+  "/",
+  createProductMiddlewares,
 );
+
+router.post("/create", createProductMiddlewares);
 
 // ================= GET ALL PRODUCTS =================
 

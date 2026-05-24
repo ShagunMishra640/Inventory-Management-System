@@ -140,6 +140,8 @@ app.use("/api/discount", discountRoutes);
 
 app.use("/api/products", productRoutes);
 
+app.use("/api/product", productRoutes);
+
 app.use("/api/categories", categoryRoutes);
 
 app.use("/api/warehouses", warehouseRoutes);

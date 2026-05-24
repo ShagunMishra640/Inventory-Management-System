@@ -8,7 +8,7 @@ const jwt = require("jsonwebtoken");
 
 const registerAdmin = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, phone } = req.body;
 
     // Check existing admin
 
@@ -29,13 +29,17 @@ const registerAdmin = async (req, res) => {
       name,
       email,
       password,
+      phone,
       role: "admin",
     });
+
+    const adminResponse = admin.toObject();
+    delete adminResponse.password;
 
     res.status(201).json({
       success: true,
       message: "Admin registered successfully",
-      admin,
+      admin: adminResponse,
     });
   } catch (error) {
     res.status(500).json({
@@ -92,11 +96,14 @@ const loginAdmin = async (req, res) => {
       },
     );
 
+    const adminResponse = admin.toObject();
+    delete adminResponse.password;
+
     res.status(200).json({
       success: true,
       message: "Login successful",
       token,
-      admin,
+      admin: adminResponse,
     });
   } catch (error) {
     res.status(500).json({

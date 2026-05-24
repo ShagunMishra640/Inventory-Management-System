@@ -5,6 +5,8 @@ const router = express.Router();
 // ================= CONTROLLERS =================
 
 const {
+  registerAdmin,
+  loginAdmin,
   getDashboard,
   getAllAdmins,
 } = require("../controllers/adminController");
@@ -14,6 +16,12 @@ const {
 const protect = require("../../../middlewares/authMiddleware");
 
 const authorizeRoles = require("../../../middlewares/roleMiddleware");
+
+// ================= ADMIN AUTH =================
+
+router.post("/register", registerAdmin);
+
+router.post("/login", loginAdmin);
 
 // ================= ADMIN DASHBOARD =================
 

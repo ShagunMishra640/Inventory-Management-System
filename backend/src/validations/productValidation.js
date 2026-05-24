@@ -5,9 +5,17 @@ const { body } = require("express-validator");
 exports.createProductValidation = [
   body("name").notEmpty().withMessage("Product name required"),
 
-  body("price").notEmpty().withMessage("Price required"),
+  body("sku").notEmpty().withMessage("SKU required"),
 
-  body("stock").notEmpty().withMessage("Stock required"),
+  body("sellingPrice")
+    .notEmpty()
+    .withMessage("Selling price required")
+    .isNumeric()
+    .withMessage("Selling price must be a number"),
 
-  body("category").notEmpty().withMessage("Category required"),
+  body("costPrice")
+    .notEmpty()
+    .withMessage("Cost price required")
+    .isNumeric()
+    .withMessage("Cost price must be a number"),
 ];
