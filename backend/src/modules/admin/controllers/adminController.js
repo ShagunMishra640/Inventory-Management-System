@@ -1,4 +1,4 @@
-// controllers/adminController.js
+// src/modules/admin/controllers/adminController.js
 
 const User = require("../../../models/auth/userModel");
 
@@ -6,15 +6,11 @@ const jwt = require("jsonwebtoken");
 
 // ================= REGISTER ADMIN =================
 
-const registerAdmin = async (req, res) => {
+const registerAdmin = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
-    // Check existing admin
-
-    const existingAdmin = await User.findOne({
-      email,
-    });
+    const existingAdmin = await User.findOne({ email });
 
     if (existingAdmin) {
       return res.status(400).json({
@@ -22,8 +18,6 @@ const registerAdmin = async (req, res) => {
         message: "Admin already exists",
       });
     }
-
-    // Create admin
 
     const admin = await User.create({
       name,
@@ -38,20 +32,15 @@ const registerAdmin = async (req, res) => {
       admin,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
 // ================= LOGIN ADMIN =================
 
-const loginAdmin = async (req, res) => {
+const loginAdmin = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-
-    // Check admin
 
     const admin = await User.findOne({
       email,
@@ -65,8 +54,6 @@ const loginAdmin = async (req, res) => {
       });
     }
 
-    // Compare password
-
     const isMatch = await admin.matchPassword(password);
 
     if (!isMatch) {
@@ -76,8 +63,6 @@ const loginAdmin = async (req, res) => {
       });
     }
 
-    // Generate token
-
     const token = jwt.sign(
       {
         id: admin._id,
@@ -85,7 +70,7 @@ const loginAdmin = async (req, res) => {
         role: admin.role,
       },
 
-      process.env.JWT_SECRET || "mysecretkey",
+      process.env.JWT_SECRET,
 
       {
         expiresIn: "7d",
@@ -99,32 +84,26 @@ const loginAdmin = async (req, res) => {
       admin,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
 // ================= ADMIN DASHBOARD =================
 
-const getDashboard = async (req, res) => {
+const getDashboard = async (req, res, next) => {
   try {
     res.status(200).json({
       success: true,
       message: "Admin Dashboard Working",
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 
 // ================= GET ALL ADMINS =================
 
-const getAllAdmins = async (req, res) => {
+const getAllAdmins = async (req, res, next) => {
   try {
     const admins = await User.find({
       role: "admin",
@@ -135,10 +114,7 @@ const getAllAdmins = async (req, res) => {
       admins,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    next(error);
   }
 };
 

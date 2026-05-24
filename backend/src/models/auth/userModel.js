@@ -7,26 +7,17 @@ const userSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      trim: true,
     },
 
     email: {
       type: String,
       required: true,
       unique: true,
-      lowercase: true,
-      trim: true,
     },
 
     password: {
       type: String,
       required: true,
-    },
-
-    phone: {
-      type: String,
-      trim: true,
-      default: "",
     },
 
     role: {
@@ -36,17 +27,13 @@ const userSchema = new mongoose.Schema(
 
       default: "cashier",
     },
-
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
   },
-
   {
     timestamps: true,
   },
 );
+
+// HASH PASSWORD
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
@@ -59,6 +46,8 @@ userSchema.pre("save", async function (next) {
 
   next();
 });
+
+// MATCH PASSWORD
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
