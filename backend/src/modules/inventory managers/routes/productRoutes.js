@@ -2,6 +2,8 @@ const express = require("express");
 
 const router = express.Router();
 
+// ================= CONTROLLERS =================
+
 const {
   createProduct,
   getProducts,
@@ -10,10 +12,50 @@ const {
   deleteProduct,
 } = require("../controllers/productController");
 
-router.post("/", createProduct);
-router.get("/", getProducts);
-router.get("/:id", getSingleProduct);
-router.put("/:id", updateProduct);
-router.delete("/:id", deleteProduct);
+// ================= MIDDLEWARES =================
+
+const protect = require("../../../middlewares/authMiddleware");
+
+const authorizeRoles = require("../../../middlewares/roleMiddleware");
+
+const validationMiddleware = require("../../../middlewares/validationMiddleware");
+
+// ================= VALIDATIONS =================
+
+const {
+  createProductValidation,
+} = require("../../../validations/productValidation");
+
+// ================= CREATE PRODUCT =================
+
+router.post(
+  "/",
+  protect,
+  authorizeRoles("admin", "inventory-manager"),
+  createProductValidation,
+  validationMiddleware,
+  createProduct,
+);
+
+// ================= GET ALL PRODUCTS =================
+
+router.get("/", protect, getProducts);
+
+// ================= GET SINGLE PRODUCT =================
+
+router.get("/:id", protect, getSingleProduct);
+
+// ================= UPDATE PRODUCT =================
+
+router.put(
+  "/:id",
+  protect,
+  authorizeRoles("admin", "inventory-manager"),
+  updateProduct,
+);
+
+// ================= DELETE PRODUCT =================
+
+router.delete("/:id", protect, authorizeRoles("admin"), deleteProduct);
 
 module.exports = router;

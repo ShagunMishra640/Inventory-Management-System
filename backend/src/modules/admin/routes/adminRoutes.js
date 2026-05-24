@@ -2,32 +2,41 @@ const express = require("express");
 
 const router = express.Router();
 
+// ================= CONTROLLERS =================
+
 const {
-  registerAdmin,
-  loginAdmin,
+  getDashboard,
   getAllAdmins,
 } = require("../controllers/adminController");
 
+// ================= MIDDLEWARES =================
 
-// Register
-router.post("/register", registerAdmin);
-router.get("/register", (req, res) => {
-  res.status(405).json({
-    success: false,
-    message: "Use POST /api/admin/register to register an admin.",
-  });
-});
+const protect = require("../../../middlewares/authMiddleware");
 
-// Login
-router.post("/login", loginAdmin);
-router.get("/login", (req, res) => {
-  res.status(405).json({
-    success: false,
-    message: "Use POST /api/admin/login to login an admin.",
-  });
-});
+const authorizeRoles = require("../../../middlewares/roleMiddleware");
 
-// Get all admins
-router.get("/", getAllAdmins);
+// ================= ADMIN DASHBOARD =================
+
+router.get(
+  "/dashboard",
+
+  protect,
+
+  authorizeRoles("admin"),
+
+  getDashboard,
+);
+
+// ================= GET ALL ADMINS =================
+
+router.get(
+  "/admins",
+
+  protect,
+
+  authorizeRoles("admin"),
+
+  getAllAdmins,
+);
 
 module.exports = router;
