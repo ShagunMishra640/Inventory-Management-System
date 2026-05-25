@@ -48,6 +48,8 @@ require("./src/models/cashier/Receipt");
 
 require("./src/models/cashier/Refund");
 
+require("./src/models/cashier/Transaction");
+
 require("./src/models/cashier/product");
 
 // =========================
@@ -93,6 +95,8 @@ const receiptRoutes = require("./src/modules/cashier/routes/receiptRoutes");
 const invoiceRoutes = require("./src/modules/cashier/routes/invoiceRoutes");
 
 const refundRoutes = require("./src/modules/cashier/routes/refundRoutes");
+
+const transactionRoutes = require("./src/modules/cashier/routes/transactionRoutes");
 
 const customerRoutes = require("./src/modules/cashier/routes/customerRoutes");
 
@@ -165,6 +169,10 @@ app.use("/api/receipt", receiptRoutes);
 app.use("/api/invoice", invoiceRoutes);
 
 app.use("/api/refund", refundRoutes);
+
+app.use("/api/transaction", transactionRoutes);
+
+app.use("/api/transactions", transactionRoutes);
 
 app.use("/api/customer", customerRoutes);
 

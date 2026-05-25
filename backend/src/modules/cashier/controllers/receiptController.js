@@ -26,8 +26,15 @@ const createReceipt = async (req, res) => {
 const getReceipts = async (req, res) => {
   try {
     const receipts = await Receipt.find()
-      .populate("order")
-      .populate("customer");
+      .populate({
+        path: "order",
+        populate: [
+          { path: "customer" },
+          { path: "cashier" },
+          { path: "products.productId" },
+        ],
+      })
+      .populate("payment");
 
     return res.status(200).json({
       success: true,

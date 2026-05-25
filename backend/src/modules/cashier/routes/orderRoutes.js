@@ -11,21 +11,10 @@ const {
   //deleteOrder,
 } = require("../controllers/orderController");
 
-// ================= MIDDLEWARES =================
-
-const protect = require("../../../middlewares/authMiddleware");
-
-const authorizeRoles = require("../../../middlewares/roleMiddleware");
-
 // ================= CREATE ORDER =================
 
 router.post(
   "/create",
-
-  protect,
-
-  authorizeRoles("cashier", "admin"),
-
   createOrder,
 );
 
@@ -33,11 +22,6 @@ router.post(
 
 router.get(
   "/",
-
-  protect,
-
-  authorizeRoles("cashier", "admin"),
-
   getOrders,
 );
 
