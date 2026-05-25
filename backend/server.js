@@ -9,11 +9,6 @@ const notificationRoutes = require("./src/modules/admin/routes/notificationRoute
 const userManagementRoutes = require("./src/modules/admin/routes/userManagementRoutes");
 const accessRoutes = require("./src/modules/admin/routes/accessRoutes");
 
-
-
-
-
-
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/analytics", analyticsRoutes);
@@ -23,7 +18,6 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/users", userManagementRoutes);
 app.use("/api/access", accessRoutes);
 const PORT = process.env.PORT || 5000;
-
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
