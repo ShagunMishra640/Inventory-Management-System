@@ -19,18 +19,7 @@ const authorizeRoles = require("../../../middlewares/roleMiddleware");
 
 // ================= ADMIN AUTH =================
 
-router.get("/", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Admin API is running",
-    endpoints: {
-      register: "/api/admin/register",
-      login: "/api/admin/login",
-      dashboard: "/api/admin/dashboard",
-      admins: "/api/admin/admins",
-    },
-  });
-});
+router.get("/", getAllAdmins);
 
 // ================= REGISTER ADMIN =================
 
