@@ -7,9 +7,10 @@ const {
 
 const createOrder = async (req, res) => {
   try {
-    const { customer, cashier, products } = req.body;
+    const { customer, cashier, products, paymentStatus, orderStatus } = req.body;
+    const cashierId = cashier || req.user?.id;
 
-    if (!customer || !cashier) {
+    if (!customer || !cashierId) {
       return res.status(400).json({
         success: false,
         message: "Customer and cashier are required",
@@ -34,10 +35,12 @@ const createOrder = async (req, res) => {
 
     const order = await Order.create({
       customer,
-      cashier,
+      cashier: cashierId,
       products: sanitizedProducts,
       totalAmount,
       orderNumber,
+      paymentStatus,
+      orderStatus,
     });
 
     res.status(201).json({

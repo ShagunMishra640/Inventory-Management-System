@@ -5,9 +5,14 @@ const connectDB = async () => {
 
   try {
     await mongoose.connect(uri);
+    const databaseName =
+      mongoose.connection.name || new URL(uri).pathname.replace("/", "");
+    const sanitizedUri = uri.replace(/\/\/([^:]+):([^@]+)@/, "//$1:***@");
+
     console.log(
-      `MongoDB Connected: ${mongoose.connection.host}/${mongoose.connection.name}`,
+      `MongoDB Connected: ${mongoose.connection.host}/${databaseName}`,
     );
+    console.log(`MongoDB URI: ${sanitizedUri}`);
   } catch (error) {
     console.error("MongoDB connection error:", error.message);
     process.exit(1);
