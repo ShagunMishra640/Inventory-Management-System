@@ -19,15 +19,38 @@ const authorizeRoles = require("../../../middlewares/roleMiddleware");
 
 // ================= ADMIN AUTH =================
 
-router.post("/register", registerAdmin);
-
+router.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Admin API is running",
+    endpoints: {
+      register: "/api/admin/register",
+      login: "/api/admin/login",
+      dashboard: "/api/admin/dashboard",
+      admins: "/api/admin/admins",
+    },
+  });
+});
 
 // ================= REGISTER ADMIN =================
+
+router.get("/register", (req, res) => {
+  res.status(405).json({
+    success: false,
+    message: "Use POST /api/admin/register to register an admin.",
+  });
+});
 
 router.post("/register", registerAdmin);
 
 // ================= LOGIN ADMIN =================
 
+router.get("/login", (req, res) => {
+  res.status(405).json({
+    success: false,
+    message: "Use POST /api/admin/login to login.",
+  });
+});
 
 router.post("/login", loginAdmin);
 
