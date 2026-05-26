@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+<<<<<<< HEAD
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
 
   theme: {
@@ -8,3 +9,14 @@ export default {
 
   plugins: [],
 };
+=======
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+>>>>>>> c16a27f (save local changes)
