@@ -1,9 +1,7 @@
-<<<<<<< HEAD
 node_modules/
 .env/
 dist/
 build
-=======
 # Logs
 logs
 *.log
@@ -28,4 +26,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
->>>>>>> fabf8e206fd302429029a40b28a68c60526d1541
+.env
+*.env
