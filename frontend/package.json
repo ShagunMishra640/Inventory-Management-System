@@ -31,7 +31,11 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
     "postcss": "^8.5.15",
+<<<<<<< HEAD
     "tailwindcss": "^3.4.19",
+=======
+    "tailwindcss": "^4.3.0",
+>>>>>>> 508d4c0 (Remove OneDrive folder)
     "vite": "^8.0.12"
   }
 }
