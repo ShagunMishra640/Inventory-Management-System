@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 7ad642e (frontend)
 node_modules/
 .env/
 dist/
@@ -6,8 +9,11 @@ build
 
 .env
 *.env
+<<<<<<< HEAD
 =======
 >>>>>>> 508d4c0 (Remove OneDrive folder)
+=======
+>>>>>>> 7ad642e (frontend)
 # Logs
 logs
 *.log
@@ -19,10 +25,15 @@ lerna-debug.log*
 
 node_modules
 <<<<<<< HEAD
+<<<<<<< HEAD
 *node_modules
 
 =======
 >>>>>>> 508d4c0 (Remove OneDrive folder)
+=======
+*node_modules
+
+>>>>>>> 7ad642e (frontend)
 dist
 dist-ssr
 *.local
