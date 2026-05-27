@@ -1,296 +1,187 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-
-import {
-  FaUser as User,
-  FaEnvelope as Mail,
-  FaPhone as Phone,
-  FaLock as Lock,
-  FaEye as Eye,
-  FaEyeSlash as EyeOff,
-  FaShieldAlt as ShieldCheck
-} from "react-icons/fa";
+import { registerUser } from "../../services/authService";
+import { FaUser, FaMailBulk, FaPhone, FaLock } from "react-icons/fa";
 
 function Register() {
-
-  const [showPassword, setShowPassword] = useState(false);
-
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     role: "",
-    password: ""
+    password: "",
   });
 
   const [message, setMessage] = useState("");
 
-  // HANDLE INPUT
   const handleChange = (e) => {
-
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
-
   };
 
-  // HANDLE SUBMIT
-  const handleSubmit = (e) => {
-
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (
-      !formData.name ||
-      !formData.email ||
-      !formData.phone ||
-      !formData.role ||
-      !formData.password
-    ) {
+    try {
+      const data = await registerUser(formData);
+      console.log(data);
 
-      setMessage("Please fill all fields ❌");
+      setMessage("Registration Successful ");
 
-      return;
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        role: "",
+        password: "",
+      });
+    } catch (error) {
+      console.error(error);
+      setMessage(error.response?.data?.message || "Registration Failed ");
     }
-
-    setMessage("Registration Successful ✅");
-
-    console.log(formData);
-
   };
 
   return (
-
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 px-4 py-10">
-
-      {/* REGISTER CARD */}
-      <div className="w-full max-w-md bg-white/20 backdrop-blur-xl border border-white/30 rounded-3xl shadow-2xl p-8">
-
-        {/* ICON */}
-        <div className="flex justify-center mb-5">
-
-          <div className="h-20 w-20 bg-white rounded-full flex items-center justify-center shadow-lg">
-
-            <ShieldCheck
-              size={40}
-              className="text-emerald-600"
-            />
-
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-600 px-4">
+      <div className="w-full max-w-sm bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl p-6">
+        {/* LOGO */}
+        <div className="flex justify-center mb-4">
+          <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center shadow-lg">
+            <FaUser className="text-pink-600" size={30} />
           </div>
-
         </div>
 
         {/* TITLE */}
-        <div className="text-center mb-8">
-
-          <h1 className="text-4xl font-bold text-white">
-            Create Account
-          </h1>
-
-          <p className="text-gray-100 mt-2">
-            Register to continue
-          </p>
-
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-white">Create Account</h1>
+          <p className="text-gray-200 mt-1 text-sm">Register to get started</p>
         </div>
 
         {/* MESSAGE */}
         {message && (
-
-          <div className="bg-white text-center text-emerald-600 font-semibold p-3 rounded-xl mb-5 shadow-md">
-
+          <div className="bg-white text-center text-pink-600 font-semibold p-2 rounded-lg mb-4 shadow-md text-sm">
             {message}
-
           </div>
-
         )}
 
         {/* FORM */}
         <form onSubmit={handleSubmit}>
-
           {/* NAME */}
           <div className="mb-4">
-
-            <label className="block text-white mb-2 font-medium">
-              Full Name
-            </label>
-
-            <div className="flex items-center bg-white rounded-2xl overflow-hidden shadow-md">
-
-              <span className="px-4 text-gray-500">
-                <User size={22} />
+            <label className="block text-white mb-1 text-sm">Full Name</label>
+            <div className="flex items-center bg-white rounded-xl overflow-hidden shadow-md">
+              <span className="px-3 text-gray-500">
+                <FaUser size={18} />
               </span>
-
               <input
                 type="text"
                 name="name"
-                placeholder="Enter your name"
+                placeholder="Name"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full p-4 outline-none text-gray-700"
+                className="w-full p-2 outline-none text-gray-700 text-sm"
+                required
               />
-
             </div>
-
           </div>
 
           {/* EMAIL */}
           <div className="mb-4">
-
-            <label className="block text-white mb-2 font-medium">
-              Email Address
-            </label>
-
-            <div className="flex items-center bg-white rounded-2xl overflow-hidden shadow-md">
-
-              <span className="px-4 text-gray-500">
-                <Mail size={22} />
+            <label className="block text-white mb-1 text-sm">Email</label>
+            <div className="flex items-center bg-white rounded-xl overflow-hidden shadow-md">
+              <span className="px-3 text-gray-500">
+                <FaMailBulk size={18} />
               </span>
-
               <input
                 type="email"
                 name="email"
-                placeholder="Enter your email"
+                placeholder="Email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full p-4 outline-none text-gray-700"
+                className="w-full p-2 outline-none text-gray-700 text-sm"
+                required
               />
-
             </div>
-
           </div>
 
           {/* PHONE */}
           <div className="mb-4">
-
-            <label className="block text-white mb-2 font-medium">
-              Phone Number
-            </label>
-
-            <div className="flex items-center bg-white rounded-2xl overflow-hidden shadow-md">
-
-              <span className="px-4 text-gray-500">
-                <Phone size={22} />
+            <label className="block text-white mb-1 text-sm">Phone</label>
+            <div className="flex items-center bg-white rounded-xl overflow-hidden shadow-md">
+              <span className="px-3 text-gray-500">
+                <FaPhone size={18} />
               </span>
-
               <input
                 type="tel"
                 name="phone"
-                placeholder="Enter phone number"
+                placeholder="Phone"
                 value={formData.phone}
                 onChange={handleChange}
-                className="w-full p-4 outline-none text-gray-700"
+                className="w-full p-2 outline-none text-gray-700 text-sm"
+                required
               />
-
             </div>
-
           </div>
 
           {/* ROLE */}
           <div className="mb-4">
-
-            <label className="block text-white mb-2 font-medium">
-              Select Role
-            </label>
-
+            <label className="block text-white mb-1 text-sm">Role</label>
             <select
               name="role"
               value={formData.role}
               onChange={handleChange}
-              className="w-full p-4 rounded-2xl outline-none text-gray-700 shadow-md"
+              className="w-full p-2 rounded-xl shadow-md outline-none text-gray-700 text-sm"
+              required
             >
-
-              <option value="">
-                Choose Role
-              </option>
-
-              <option value="admin">
-                Admin
-              </option>
-
-              <option value="manager">
-                Manager
-              </option>
-
-              <option value="cashier">
-                Cashier
-              </option>
-
+              <option value="">Select Role</option>
+              <option value="manager">Manager</option>
+              <option value="cashier">Cashier</option>
             </select>
-
           </div>
 
           {/* PASSWORD */}
-          <div className="mb-6">
-
-            <label className="block text-white mb-2 font-medium">
-              Password
-            </label>
-
-            <div className="flex items-center bg-white rounded-2xl overflow-hidden shadow-md">
-
-              <span className="px-4 text-gray-500">
-                <Lock size={22} />
+          <div className="mb-5">
+            <label className="block text-white mb-1 text-sm">Password</label>
+            <div className="flex items-center bg-white rounded-xl overflow-hidden shadow-md">
+              <span className="px-3 text-gray-500">
+                <FaLock size={18} />
               </span>
-
               <input
-                type={showPassword ? "text" : "password"}
+                type="password"
                 name="password"
-                placeholder="Enter password"
+                placeholder="Password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full p-4 outline-none text-gray-700"
+                className="w-full p-2 outline-none text-gray-700 text-sm"
+                required
               />
-
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="px-4 text-gray-500 hover:text-emerald-600 transition"
-              >
-
-                {
-                  showPassword
-                    ? <EyeOff size={22} />
-                    : <Eye size={22} />
-                }
-
-              </button>
-
             </div>
-
           </div>
 
-          {/* BUTTON */}
+          {/* REGISTER BUTTON */}
           <button
             type="submit"
-            className="w-full bg-white text-emerald-700 font-bold py-4 rounded-2xl shadow-lg hover:bg-gray-100 hover:scale-105 transition duration-300"
+            className="w-full bg-white text-pink-700 font-bold py-2 rounded-xl shadow-lg hover:bg-gray-100 hover:scale-105 transition duration-300 text-sm"
           >
             Register
           </button>
-
         </form>
 
         {/* FOOTER */}
-        <div className="text-center mt-8">
-
-          <p className="text-gray-100">
-            Already have an account?
-          </p>
-
+        <div className="text-center mt-6">
+          <p className="text-gray-200 text-sm">Already have an account?</p>
           <Link
             to="/login"
-            className="mt-2 inline-block text-white font-bold hover:text-green-200 transition"
+            className="mt-1 inline-block text-white font-bold hover:text-indigo-200 transition text-sm"
           >
-            Login Here
+            Login
           </Link>
-
         </div>
-
       </div>
-
     </div>
-
   );
-
 }
 
 export default Register;
