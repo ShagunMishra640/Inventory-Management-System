@@ -2,14 +2,14 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import {
-  User,
-  Mail,
-  Phone,
-  Lock,
-  Eye,
-  EyeOff,
-  ShieldCheck
-} from "lucide-react";
+  FaUser as User,
+  FaEnvelope as Mail,
+  FaPhone as Phone,
+  FaLock as Lock,
+  FaEye as Eye,
+  FaEyeSlash as EyeOff,
+  FaShieldAlt as ShieldCheck
+} from "react-icons/fa";
 
 function Register() {
 
@@ -278,7 +278,7 @@ function Register() {
 
           <Link
             to="/login"
-            className="inline-block mt-2 text-white font-bold hover:text-green-200 transition"
+            className="mt-2 inline-block text-white font-bold hover:text-green-200 transition"
           >
             Login Here
           </Link>
