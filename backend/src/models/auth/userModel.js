@@ -20,14 +20,10 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
-    phone: {
-      type: String,
-    },
-
     role: {
       type: String,
 
-      enum: ["admin", "cashier", "inventory-manager", "manager"],
+      enum: ["admin", "cashier", "inventory-manager"],
 
       default: "cashier",
     },
@@ -36,8 +32,6 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
-
-// HASH PASSWORD
 
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) {

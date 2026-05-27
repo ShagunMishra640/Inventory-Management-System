@@ -3,38 +3,37 @@
 const User = require("../../../models/auth/userModel");
 
 const jwt = require("jsonwebtoken");
-const getPanelConfig = require("../../../utils/getPanelConfig");
 
 // ================= REGISTER ADMIN =================
 
 const registerAdmin = async (req, res, next) => {
   try {
-    const { name, email, password, phone, role = "admin" } = req.body;
+    const { name, email, password, phone } = req.body;
 
-    const existingUser = await User.findOne({ email });
+    const existingAdmin = await User.findOne({ email });
 
-    if (existingUser) {
+    if (existingAdmin) {
       return res.status(400).json({
         success: false,
-        message: "User already exists",
+        message: "Admin already exists",
       });
     }
 
-    const user = await User.create({
+    const admin = await User.create({
       name,
       email,
       password,
       phone,
-      role,
+      role: "admin",
     });
 
-    const userResponse = user.toObject();
-    delete userResponse.password;
+    const adminResponse = admin.toObject();
+    delete adminResponse.password;
 
     res.status(201).json({
       success: true,
-      message: `${role} registered successfully`,
-      user: userResponse,
+      message: "Admin registered successfully",
+      admin: adminResponse,
     });
   } catch (error) {
     next(error);
@@ -47,19 +46,19 @@ const loginAdmin = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({
+    const admin = await User.findOne({
       email,
-      role: { $in: ["admin", "manager", "inventory-manager", "cashier"] },
+      role: "admin",
     });
 
-    if (!user) {
+    if (!admin) {
       return res.status(404).json({
         success: false,
-        message: "User not found",
+        message: "Admin not found",
       });
     }
 
-    const isMatch = await user.matchPassword(password);
+    const isMatch = await admin.matchPassword(password);
 
     if (!isMatch) {
       return res.status(400).json({
@@ -70,9 +69,9 @@ const loginAdmin = async (req, res, next) => {
 
     const token = jwt.sign(
       {
-        id: user._id,
-        email: user.email,
-        role: user.role,
+        id: admin._id,
+        email: admin.email,
+        role: admin.role,
       },
 
       process.env.JWT_SECRET,
@@ -82,17 +81,14 @@ const loginAdmin = async (req, res, next) => {
       },
     );
 
-    const userResponse = user.toObject();
-    delete userResponse.password;
-    const panelConfig = getPanelConfig(user.role);
+    const adminResponse = admin.toObject();
+    delete adminResponse.password;
 
     res.status(200).json({
       success: true,
       message: "Login successful",
       token,
-      user: userResponse,
-      panel: panelConfig.panel,
-      dashboardRoute: panelConfig.dashboardRoute,
+      admin: adminResponse,
     });
   } catch (error) {
     next(error);
