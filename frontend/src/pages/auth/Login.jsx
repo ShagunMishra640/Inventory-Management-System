@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+
 import { loginUser } from "../../services/authService";
 
 import { FaLock, FaMailBulk, FaEye, FaEyeSlash } from "react-icons/fa";
@@ -13,10 +14,14 @@ function Login() {
   });
 
   const [showPassword, setShowPassword] = useState(false);
+
   const [message, setMessage] = useState("");
+
   const [success, setSuccess] = useState(false);
+
   const [isLoading, setIsLoading] = useState(false);
 
+  // HANDLE INPUT CHANGE
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -24,44 +29,69 @@ function Login() {
     });
   };
 
+  // HANDLE LOGIN
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // VALIDATION
     if (!formData.email || !formData.password) {
       setSuccess(false);
+
       setMessage("Please fill all fields");
+
       return;
     }
 
     try {
       setIsLoading(true);
+
       setSuccess(false);
 
+      // LOGIN API CALL
       const data = await loginUser(formData);
+
+      console.log(data);
+
+      // GET USER ROLE
       const role = data.user?.role;
 
+      // SAVE TOKEN
       localStorage.setItem("token", data.token);
+
+      // SAVE USER DATA
       localStorage.setItem("user", JSON.stringify(data.user));
 
+      // ROLE BASED DASHBOARD
       const dashboardPath = {
         cashier: "/cashier/dashboard",
+
         "inventory-manager": "/manager/dashboard",
       }[role];
 
+      // INVALID ROLE
       if (!dashboardPath) {
+        setSuccess(false);
+
         setMessage("Invalid role");
+
         return;
       }
 
+      // SUCCESS MESSAGE
       setSuccess(true);
-      setMessage("Login successful");
 
+      setMessage("Login Successful ");
+
+      // REDIRECT
       setTimeout(() => {
         navigate(dashboardPath);
       }, 700);
     } catch (error) {
+      console.log(error);
+
       setSuccess(false);
-      setMessage(error.response?.data?.message || "Login failed");
+
+      setMessage(error.response?.data?.message || "Login Failed ");
     } finally {
       setIsLoading(false);
     }
