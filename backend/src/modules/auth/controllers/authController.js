@@ -2,6 +2,12 @@ const User = require("../../../models/auth/userModel");
 
 const generateToken = require("../../../utils/generateToken");
 
+const sanitizeUser = (user) => {
+  const safeUser = user.toObject();
+  delete safeUser.password;
+  return safeUser;
+};
+
 const registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
@@ -27,8 +33,7 @@ const registerUser = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "User registered successfully",
-
-      user,
+      user: sanitizeUser(user),
     });
   } catch (error) {
     res.status(500).json({
@@ -66,8 +71,9 @@ const loginUser = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Login successful",
       token,
-      user,
+      user: sanitizeUser(user),
     });
   } catch (error) {
     res.status(500).json({

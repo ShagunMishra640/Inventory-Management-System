@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../../services/authService";
 import { FaUser, FaMailBulk, FaPhone, FaLock } from "react-icons/fa";
 
 function Register() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -13,6 +15,7 @@ function Register() {
   });
 
   const [message, setMessage] = useState("");
+  const [success, setSuccess] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -26,9 +29,11 @@ function Register() {
 
     try {
       const data = await registerUser(formData);
+
       console.log(data);
 
-      setMessage("Registration Successful ");
+      setSuccess(true);
+      setMessage("Registration Successfully Done ✅");
 
       setFormData({
         name: "",
@@ -37,9 +42,17 @@ function Register() {
         role: "",
         password: "",
       });
+
+      // Redirect to login page after 2 seconds
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } catch (error) {
       console.error(error);
-      setMessage(error.response?.data?.message || "Registration Failed ");
+
+      setSuccess(false);
+
+      setMessage(error.response?.data?.message || "Registration Failed ❌");
     }
   };
 
@@ -56,12 +69,19 @@ function Register() {
         {/* TITLE */}
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-white">Create Account</h1>
+
           <p className="text-gray-200 mt-1 text-sm">Register to get started</p>
         </div>
 
         {/* MESSAGE */}
         {message && (
-          <div className="bg-white text-center text-pink-600 font-semibold p-2 rounded-lg mb-4 shadow-md text-sm">
+          <div
+            className={`text-center font-semibold p-2 rounded-lg mb-4 shadow-md text-sm ${
+              success
+                ? "bg-green-100 text-green-700"
+                : "bg-red-100 text-red-700"
+            }`}
+          >
             {message}
           </div>
         )}
@@ -71,10 +91,12 @@ function Register() {
           {/* NAME */}
           <div className="mb-4">
             <label className="block text-white mb-1 text-sm">Full Name</label>
+
             <div className="flex items-center bg-white rounded-xl overflow-hidden shadow-md">
               <span className="px-3 text-gray-500">
                 <FaUser size={18} />
               </span>
+
               <input
                 type="text"
                 name="name"
@@ -90,10 +112,12 @@ function Register() {
           {/* EMAIL */}
           <div className="mb-4">
             <label className="block text-white mb-1 text-sm">Email</label>
+
             <div className="flex items-center bg-white rounded-xl overflow-hidden shadow-md">
               <span className="px-3 text-gray-500">
                 <FaMailBulk size={18} />
               </span>
+
               <input
                 type="email"
                 name="email"
@@ -109,10 +133,12 @@ function Register() {
           {/* PHONE */}
           <div className="mb-4">
             <label className="block text-white mb-1 text-sm">Phone</label>
+
             <div className="flex items-center bg-white rounded-xl overflow-hidden shadow-md">
               <span className="px-3 text-gray-500">
                 <FaPhone size={18} />
               </span>
+
               <input
                 type="tel"
                 name="phone"
@@ -128,6 +154,7 @@ function Register() {
           {/* ROLE */}
           <div className="mb-4">
             <label className="block text-white mb-1 text-sm">Role</label>
+
             <select
               name="role"
               value={formData.role}
@@ -136,7 +163,7 @@ function Register() {
               required
             >
               <option value="">Select Role</option>
-              <option value="manager">Manager</option>
+              <option value="inventory-manager">Inventory Manager</option>
               <option value="cashier">Cashier</option>
             </select>
           </div>
@@ -144,10 +171,12 @@ function Register() {
           {/* PASSWORD */}
           <div className="mb-5">
             <label className="block text-white mb-1 text-sm">Password</label>
+
             <div className="flex items-center bg-white rounded-xl overflow-hidden shadow-md">
               <span className="px-3 text-gray-500">
                 <FaLock size={18} />
               </span>
+
               <input
                 type="password"
                 name="password"
@@ -172,6 +201,7 @@ function Register() {
         {/* FOOTER */}
         <div className="text-center mt-6">
           <p className="text-gray-200 text-sm">Already have an account?</p>
+
           <Link
             to="/login"
             className="mt-1 inline-block text-white font-bold hover:text-indigo-200 transition text-sm"
