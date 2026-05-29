@@ -1,216 +1,178 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+// import { useState } from "react";
+// import { Link, useNavigate } from "react-router-dom";
 
-import { loginUser } from "../../services/authService";
+// import { loginUser } from "../../services/authService";
 
-import { FaLock, FaMailBulk, FaEye, FaEyeSlash } from "react-icons/fa";
+// import { FaLock, FaMailBulk, FaEye, FaEyeSlash } from "react-icons/fa";
 
-function Login() {
-  const navigate = useNavigate();
+// function Login() {
+//   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+//   const [formData, setFormData] = useState({
+//     email: "",
+//     password: "",
+//   });
 
-  const [showPassword, setShowPassword] = useState(false);
+//   const [showPassword, setShowPassword] = useState(false);
+//   const [message, setMessage] = useState("");
+//   const [success, setSuccess] = useState(false);
+//   const [isLoading, setIsLoading] = useState(false);
 
-  const [message, setMessage] = useState("");
+//   const handleChange = (e) => {
+//     setFormData({
+//       ...formData,
+//       [e.target.name]: e.target.value,
+//     });
+//   };
 
-  const [success, setSuccess] = useState(false);
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
 
-  const [isLoading, setIsLoading] = useState(false);
+//     if (!formData.email || !formData.password) {
+//       setSuccess(false);
+//       setMessage("Please fill all fields");
+//       return;
+//     }
 
-  // HANDLE INPUT CHANGE
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+//     try {
+//       setIsLoading(true);
+//       setSuccess(false);
 
-  // HANDLE LOGIN
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+//       const data = await loginUser(formData);
 
-    // VALIDATION
-    if (!formData.email || !formData.password) {
-      setSuccess(false);
+//       const role = data.user?.role;
 
-      setMessage("Please fill all fields");
+//       localStorage.setItem("token", data.token);
+//       localStorage.setItem("user", JSON.stringify(data.user));
 
-      return;
-    }
+//       const dashboardPath = {
+//         cashier: "/cashier/dashboard",
+//         "inventory-manager": "/manager/dashboard",
+//       }[role];
 
-    try {
-      setIsLoading(true);
+//       if (!dashboardPath) {
+//         setSuccess(false);
+//         setMessage("Invalid role");
+//         return;
+//       }
 
-      setSuccess(false);
+//       setSuccess(true);
+//       setMessage("Login Successful");
 
-      // LOGIN API CALL
-      const data = await loginUser(formData);
+//       setTimeout(() => {
+//         navigate(dashboardPath);
+//       }, 700);
+//     } catch (error) {
+//       setSuccess(false);
+//       setMessage(error.response?.data?.message || "Login Failed");
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
 
-      console.log(data);
+//   return (
+//     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 px-4">
+//       <div className="w-full max-w-sm bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl p-6">
+//         <div className="flex justify-center mb-4">
+//           <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center shadow-lg">
+//             <FaLock className="text-purple-600" size={30} />
+//           </div>
+//         </div>
 
-      // GET USER ROLE
-      const role = data.user?.role;
+//         <div className="text-center mb-6">
+//           <h1 className="text-2xl font-bold text-white">Welcome Back</h1>
+//           <p className="text-gray-200 mt-1 text-sm">Login to your account</p>
+//         </div>
 
-      // SAVE TOKEN
-      localStorage.setItem("token", data.token);
+//         {message && (
+//           <div
+//             className={`text-center font-semibold p-2 rounded-lg mb-4 shadow-md text-sm ${
+//               success
+//                 ? "bg-green-100 text-green-700"
+//                 : "bg-red-100 text-red-700"
+//             }`}
+//           >
+//             {message}
+//           </div>
+//         )}
 
-      // SAVE USER DATA
-      localStorage.setItem("user", JSON.stringify(data.user));
+//         <form onSubmit={handleSubmit}>
+//           <div className="mb-4">
+//             <label className="block text-white mb-1 text-sm">
+//               Email Address
+//             </label>
 
-      // ROLE BASED DASHBOARD
-      const dashboardPath = {
-        cashier: "/cashier/dashboard",
+//             <div className="flex items-center bg-white rounded-xl overflow-hidden shadow-md">
+//               <span className="px-3 text-gray-500">
+//                 <FaMailBulk size={18} />
+//               </span>
 
-        "inventory-manager": "/manager/dashboard",
-      }[role];
+//               <input
+//                 type="email"
+//                 name="email"
+//                 placeholder="Enter your email"
+//                 value={formData.email}
+//                 onChange={handleChange}
+//                 className="w-full p-2 outline-none text-gray-700 text-sm"
+//               />
+//             </div>
+//           </div>
 
-      // INVALID ROLE
-      if (!dashboardPath) {
-        setSuccess(false);
+//           <div className="mb-5">
+//             <label className="block text-white mb-1 text-sm">Password</label>
 
-        setMessage("Invalid role");
+//             <div className="flex items-center bg-white rounded-xl overflow-hidden shadow-md">
+//               <span className="px-3 text-gray-500">
+//                 <FaLock size={18} />
+//               </span>
 
-        return;
-      }
+//               <input
+//                 type={showPassword ? "text" : "password"}
+//                 name="password"
+//                 placeholder="Enter your password"
+//                 value={formData.password}
+//                 onChange={handleChange}
+//                 className="w-full p-2 outline-none text-gray-700 text-sm"
+//               />
 
-      // SUCCESS MESSAGE
-      setSuccess(true);
+//               <button
+//                 type="button"
+//                 onClick={() => setShowPassword(!showPassword)}
+//                 className="px-3 text-gray-500"
+//               >
+//                 {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+//               </button>
+//             </div>
+//           </div>
 
-      setMessage("Login Successful ");
+//           <div className="flex justify-end mb-5">
+//             <Link to="/forgot-password" className="text-xs text-white">
+//               Forgot Password?
+//             </Link>
+//           </div>
 
-      // REDIRECT
-      setTimeout(() => {
-        navigate(dashboardPath);
-      }, 700);
-    } catch (error) {
-      console.log(error);
+//           <button
+//             type="submit"
+//             disabled={isLoading}
+//             className="w-full bg-white text-purple-700 font-bold py-2 rounded-xl shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
+//           >
+//             {isLoading ? "Logging in..." : "Login"}
+//           </button>
+//         </form>
 
-      setSuccess(false);
+//         <div className="text-center mt-6">
+//           <p className="text-gray-200 text-sm">Don't have an account?</p>
 
-      setMessage(error.response?.data?.message || "Login Failed ");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+//           <Link
+//             to="/register"
+//             className="mt-1 inline-block text-white font-bold"
+//           >
+//             Create Account
+//           </Link>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 px-4">
-      {/* LOGIN CONTAINER */}
-      <div className="w-full max-w-sm bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl p-6">
-        {/* LOGO */}
-        <div className="flex justify-center mb-4">
-          <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center shadow-lg">
-            <FaLock className="text-purple-600" size={30} />
-          </div>
-        </div>
-
-        {/* TITLE */}
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-white">Welcome Back</h1>
-
-          <p className="text-gray-200 mt-1 text-sm">Login to your account</p>
-        </div>
-
-        {/* MESSAGE */}
-        {message && (
-          <div
-            className={`text-center font-semibold p-2 rounded-lg mb-4 shadow-md text-sm ${
-              success
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-            }`}
-          >
-            {message}
-          </div>
-        )}
-
-        {/* FORM */}
-        <form onSubmit={handleSubmit}>
-          {/* EMAIL */}
-          <div className="mb-4">
-            <label className="block text-white mb-1 text-sm">
-              Email Address
-            </label>
-
-            <div className="flex items-center bg-white rounded-xl overflow-hidden shadow-md">
-              <span className="px-3 text-gray-500">
-                <FaMailBulk size={18} />
-              </span>
-
-              <input
-                type="email"
-                name="email"
-                placeholder="Enter your email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full p-2 outline-none text-gray-700 text-sm"
-              />
-            </div>
-          </div>
-
-          {/* PASSWORD */}
-          <div className="mb-5">
-            <label className="block text-white mb-1 text-sm">Password</label>
-
-            <div className="flex items-center bg-white rounded-xl overflow-hidden shadow-md">
-              <span className="px-3 text-gray-500">
-                <FaLock size={18} />
-              </span>
-
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full p-2 outline-none text-gray-700 text-sm"
-              />
-
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="px-3 text-gray-500"
-              >
-                {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
-              </button>
-            </div>
-          </div>
-
-          {/* FORGOT PASSWORD */}
-          <div className="flex justify-end mb-5">
-            <Link to="/forgot-password" className="text-xs text-white">
-              Forgot Password?
-            </Link>
-          </div>
-
-          {/* LOGIN BUTTON */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-white text-purple-700 font-bold py-2 rounded-xl shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoading ? "Logging in..." : "Login"}
-          </button>
-        </form>
-
-        {/* FOOTER */}
-        <div className="text-center mt-6">
-          <p className="text-gray-200 text-sm">Don't have an account?</p>
-
-          <Link
-            to="/register"
-            className="mt-1 inline-block text-white font-bold"
-          >
-            Create Account
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default Login;
+// export default Login;

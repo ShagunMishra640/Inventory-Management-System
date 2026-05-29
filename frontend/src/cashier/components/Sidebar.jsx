@@ -1,60 +1,90 @@
+import React from "react";
+
+import { Link, useLocation } from "react-router-dom";
+
 import {
+  FaTachometerAlt,
   FaShoppingCart,
-  FaReceipt,
-  FaBoxOpen,
+  FaClipboardList,
   FaUsers,
-  FaTags,
   FaMoneyBillWave,
-  FaUndo,
-  FaFileInvoiceDollar,
-  FaChartBar,
+  FaUserCircle,
   FaSignOutAlt,
 } from "react-icons/fa";
 
 function Sidebar() {
-  return (
-    <div className="w-64 bg-gradient-to-b from-pink-600 to-purple-700 text-white p-5 shadow-2xl min-h-screen">
-      {/* LOGO */}
-      <div className="text-center mb-10">
-        <h1 className="text-3xl font-bold">Cashier Panel</h1>
-        <p className="text-sm text-gray-200 mt-2">Billing & Sales System</p>
-      </div>
+  const location = useLocation();
 
-      {/* MENU */}
+  const menuItems = [
+    {
+      name: "Dashboard",
+      path: "/cashier/dashboard",
+      icon: <FaTachometerAlt />,
+    },
+
+    {
+      name: "Billing",
+      path: "/cashier/billing",
+      icon: <FaShoppingCart />,
+    },
+
+    {
+      name: "Orders",
+      path: "/cashier/orders",
+      icon: <FaClipboardList />,
+    },
+
+    {
+      name: "Customers",
+      path: "/cashier/customers",
+      icon: <FaUsers />,
+    },
+
+    {
+      name: "Payments",
+      path: "/cashier/payments",
+      icon: <FaMoneyBillWave />,
+    },
+
+    {
+      name: "Profile",
+      path: "/cashier/profile",
+      icon: <FaUserCircle />,
+    },
+  ];
+
+  return (
+    <div className="w-64 min-h-screen bg-blue-900 text-white p-5">
+      {/* Logo */}
+      <h1 className="text-3xl font-bold mb-10 text-center">Cashier</h1>
+
+      {/* Menu */}
       <ul className="space-y-4">
-        <li className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/20 cursor-pointer">
-          <FaShoppingCart /> <span>Dashboard</span>
-        </li>
-        <li className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/20 cursor-pointer">
-          <FaReceipt /> <span>Billing / POS</span>
-        </li>
-        <li className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/20 cursor-pointer">
-          <FaBoxOpen /> <span>Products</span>
-        </li>
-        <li className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/20 cursor-pointer">
-          <FaUsers /> <span>Customers</span>
-        </li>
-        <li className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/20 cursor-pointer">
-          <FaTags /> <span>Discounts</span>
-        </li>
-        <li className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/20 cursor-pointer">
-          <FaMoneyBillWave /> <span>Payments</span>
-        </li>
-        <li className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/20 cursor-pointer">
-          <FaFileInvoiceDollar /> <span>Receipts</span>
-        </li>
-        <li className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/20 cursor-pointer">
-          <FaUndo /> <span>Refunds</span>
-        </li>
-        <li className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/20 cursor-pointer">
-          <FaChartBar /> <span>Reports</span>
-        </li>
+        {menuItems.map((item, index) => (
+          <li key={index}>
+            <Link
+              to={item.path}
+              className={`flex items-center gap-3 p-3 rounded-lg transition duration-300
+              
+              ${
+                location.pathname === item.path
+                  ? "bg-blue-600"
+                  : "hover:bg-gray-700"
+              }`}
+            >
+              <span className="text-lg">{item.icon}</span>
+
+              <span className="text-md">{item.name}</span>
+            </Link>
+          </li>
+        ))}
       </ul>
 
-      {/* LOGOUT */}
+      {/* Logout Button */}
       <div className="mt-10">
-        <button className="flex items-center gap-2 bg-red-500 hover:bg-red-600 px-4 py-2 rounded-xl shadow-lg transition">
-          <FaSignOutAlt /> Logout
+        <button className="flex items-center gap-3 w-full bg-red-500 hover:bg-red-600 p-3 rounded-lg transition duration-300">
+          <FaSignOutAlt />
+          Logout
         </button>
       </div>
     </div>
