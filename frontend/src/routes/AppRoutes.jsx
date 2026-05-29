@@ -7,23 +7,27 @@ import ForgotPassword from "../pages/auth/ForgotPassword";
 import CashierDashboard from "../cashier/Dashboard";
 import ManagerDashboard from "../manager/Dashboard";
 
+import Billing from "../cashier/pages/Billing";
+import Orders from "../cashier/pages/Orders";
+import Products from "../cashier/pages/Products";
+
 import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* DEFAULT ROUTE */}
+        {/* ================= DEFAULT ROUTE ================= */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* PUBLIC ROUTES */}
+        {/* ================= PUBLIC ROUTES ================= */}
         <Route path="/login" element={<Login />} />
 
         <Route path="/register" element={<Register />} />
 
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        {/* PROTECTED CASHIER ROUTE */}
+        {/* ================= CASHIER DASHBOARD ================= */}
         <Route
           path="/cashier/dashboard"
           element={
@@ -33,7 +37,37 @@ function AppRoutes() {
           }
         />
 
-        {/* PROTECTED MANAGER ROUTE */}
+        {/* ================= BILLING PAGE ================= */}
+        <Route
+          path="/billing"
+          element={
+            <ProtectedRoute>
+              <Billing />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ================= PRODUCTS PAGE ================= */}
+        <Route
+          path="/products"
+          element={
+            <ProtectedRoute>
+              <Products />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ================= ORDERS PAGE ================= */}
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute>
+              <Orders />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ================= MANAGER DASHBOARD ================= */}
         <Route
           path="/manager/dashboard"
           element={
