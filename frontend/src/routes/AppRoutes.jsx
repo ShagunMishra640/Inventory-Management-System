@@ -8,14 +8,11 @@ import CashierRoutes from "../cashier/routes/CashierRoutes";
 function AppRoutes() {
   return (
     <Routes>
-      {/* Default redirect */}
       <Route path="/" element={<Navigate to="/login" />} />
 
-      {/* AUTH */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      {/* CASHIER */}
       <Route path="/cashier/*" element={<CashierRoutes />} />
     </Routes>
   );

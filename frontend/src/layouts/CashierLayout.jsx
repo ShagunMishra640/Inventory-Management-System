@@ -1,5 +1,5 @@
-import Sidebar from "../components/Sidebar";
-import Topbar from "../components/Topbar";
+import Sidebar from "../cashier/components/Sidebar";
+import Navbar from "../cashier/components/Navbar";
 import { Outlet } from "react-router-dom";
 
 function CashierLayout() {
@@ -8,7 +8,7 @@ function CashierLayout() {
       <Sidebar />
 
       <div className="flex-1 p-6">
-        <Topbar />
+        <Navbar />
 
         {/* Pages will load here */}
         <Outlet />
