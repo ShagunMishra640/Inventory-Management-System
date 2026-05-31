@@ -84,7 +84,10 @@ function Sidebar() {
                 }`}
               >
                 <span className="text-lg">{item.icon}</span>
-                {item.name && item.name.toLowerCase().includes('notifi') ? null : <span>{item.name}</span>}
+                {item.name &&
+                item.name.toLowerCase().includes("notifi") ? null : (
+                  <span>{item.name}</span>
+                )}
               </Link>
             </li>
           ))}

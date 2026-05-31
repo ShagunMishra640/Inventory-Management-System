@@ -1,38 +1,63 @@
-import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Boxes, Users, LogOut, Bell } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import React from "react";
+import { useNavigate, useLocation, Outlet } from "react-router-dom";
+import {
+  FaTachometerAlt,
+  FaShoppingCart,
+  FaBox,
+  FaUsers,
+  FaSignOutAlt,
+  FaBell,
+} from "react-icons/fa";
 
-export default function Layout({ children }) {
+import { useApp } from "../context/AppContext";
+
+export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useApp();
 
   const menuItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'POS Terminal', path: '/terminal', icon: ShoppingCart },
-    { name: 'Inventory', path: '/inventory', icon: Boxes },
-    { name: 'Users', path: '/users', icon: Users },
+    { name: "Dashboard", path: "/dashboard", icon: FaTachometerAlt },
+    { name: "POS Terminal", path: "/terminal", icon: FaShoppingCart },
+    { name: "Inventory", path: "/inventory", icon: FaBox },
+    { name: "Users", path: "/users", icon: FaUsers },
   ];
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#F8FAFC]">
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col justify-between p-4 h-full flex-shrink-0">
+
+      {/* SIDEBAR */}
+      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col justify-between p-4">
+
         <div>
-          <div className="mb-8 px-2 py-1">
-            <h1 className="text-xl font-bold text-brand tracking-tight">RetailPOS</h1>
-            <p className="text-xs text-slate-400">Omnichannel Management</p>
+          {/* LOGO */}
+          <div className="mb-8 px-2">
+            <h1 className="text-xl font-bold text-blue-600">RetailPOS</h1>
+            <p className="text-xs text-slate-400">Omnichannel System</p>
           </div>
+
+          {/* MENU */}
           <nav className="space-y-1">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.path;
+
+              // FIX ACTIVE ROUTE (handles sub routes too)
+              const isActive = location.pathname.startsWith(item.path);
+
               return (
                 <button
                   key={item.name}
                   onClick={() => navigate(item.path)}
-                  className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                    isActive ? 'bg-brand-light text-brand' : 'text-slate-600 hover:bg-slate-50'
+                  className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-sm font-medium transition ${
+                    isActive
+                      ? "bg-blue-100 text-blue-600"
+                      : "text-slate-600 hover:bg-slate-50"
                   }`}
                 >
                   <Icon size={18} />
@@ -42,31 +67,60 @@ export default function Layout({ children }) {
             })}
           </nav>
         </div>
-        <button onClick={() => navigate('/')} className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors">
-          <LogOut size={18} /><span>Logout</span>
+
+        {/* LOGOUT */}
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600"
+        >
+          <FaSignOutAlt size={18} />
+          <span>Logout</span>
         </button>
       </aside>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between flex-shrink-0">
+      {/* MAIN AREA */}
+      <div className="flex-1 flex flex-col">
+
+        {/* HEADER */}
+        <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between">
+
           <h2 className="text-lg font-bold text-slate-800">
-            {menuItems.find(m => m.path === location.pathname)?.name || 'Control Panel'}
+            {menuItems.find((m) =>
+              location.pathname.startsWith(m.path)
+            )?.name || "Dashboard"}
           </h2>
+
           <div className="flex items-center space-x-6">
-            <div className="relative cursor-pointer p-1 rounded-full hover:bg-slate-50">
-              <Bell size={20} className="text-slate-500" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+
+            {/* NOTIFICATION */}
+            <div className="relative">
+              <FaBell className="text-slate-500" size={18} />
+              <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
             </div>
-            <div className="flex items-center space-x-3 border-l pl-6 border-slate-200">
-              <div className="w-8 h-8 rounded-full bg-brand text-white flex items-center justify-center font-bold text-sm">A</div>
-              <div className="text-left">
-                <p className="text-sm font-bold text-slate-800 leading-none">{user.name}</p>
-                <p className="text-xs text-slate-400 mt-0.5 leading-none">{user.role}</p>
+
+            {/* USER INFO */}
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                {user?.name ? user.name[0].toUpperCase() : "A"}
+              </div>
+
+              <div>
+                <p className="text-sm font-bold text-slate-800">
+                  {user?.name || "Admin"}
+                </p>
+                <p className="text-xs text-slate-400">
+                  {user?.role || "User"}
+                </p>
               </div>
             </div>
+
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto p-8">{children}</main>
+
+        {/* PAGE CONTENT */}
+        <main className="flex-1 overflow-y-auto p-6 bg-slate-50">
+          <Outlet />
+        </main>
       </div>
     </div>
   );

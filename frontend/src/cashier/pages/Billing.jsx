@@ -19,7 +19,8 @@ function Billing() {
           <div>
             <h1 className="text-3xl font-bold">Billing</h1>
             <p className="text-gray-500">
-              Search computer accessories, add them to the cart, and checkout quickly.
+              Search computer accessories, add them to the cart, and checkout
+              quickly.
             </p>
           </div>
           <input
