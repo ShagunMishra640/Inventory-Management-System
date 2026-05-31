@@ -17,16 +17,16 @@ export default function Layout() {
   const { user } = useApp();
 
   const menuItems = [
-    { name: "Dashboard", path: "/dashboard", icon: FaTachometerAlt },
-    { name: "POS Terminal", path: "/terminal", icon: FaShoppingCart },
-    { name: "Inventory", path: "/inventory", icon: FaBox },
-    { name: "Users", path: "/users", icon: FaUsers },
+    { name: "Dashboard", path: "/admin/dashboard", icon: FaTachometerAlt },
+    { name: "POS Terminal", path: "/admin/terminal", icon: FaShoppingCart },
+    { name: "Inventory", path: "/admin/inventory", icon: FaBox },
+    { name: "Users", path: "/admin/users", icon: FaUsers },
   ];
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/login");
+    navigate("/admin/login");
   };
 
   return (

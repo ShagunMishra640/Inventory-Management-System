@@ -10,6 +10,7 @@ import Setting from "../pages/Setting";
 import POSTerminal from "../pages/POSTerminal";
 import AdminRegister from "../pages/AdminRegister";
 import Unauthorized from "../pages/Unauthorized";
+import Login from "../pages/Login";
 
 import Layout from "../components/Layout";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -17,8 +18,11 @@ import ProtectedRoute from "../components/ProtectedRoute";
 function AdminRoutes() {
   return (
     <Routes>
+      <Route path="login" element={<Login />} />
+      <Route path="register" element={<AdminRegister />} />
+      <Route path="unauthorized" element={<Unauthorized />} />
+
       <Route
-        path="/"
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
             <Layout />
@@ -35,9 +39,9 @@ function AdminRoutes() {
         <Route path="report" element={<Report />} />
         <Route path="terminal" element={<POSTerminal />} />
         <Route path="setting" element={<Setting />} />
-        <Route path="register" element={<AdminRegister />} />
-        <Route path="unauthorized" element={<Unauthorized />} />
       </Route>
+
+      <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
     </Routes>
   );
 }

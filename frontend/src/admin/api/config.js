@@ -1,5 +1,5 @@
-// Base backend URL
-export const BASE_URL = "http://localhost:5000/api";
+// Base backend URL. Vite proxies /api to the backend in development.
+export const BASE_URL = "/api";
 
 // API Endpoints
 export const ENDPOINTS = {
