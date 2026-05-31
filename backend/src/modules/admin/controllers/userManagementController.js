@@ -2,6 +2,12 @@
 
 const User = require("../../../models/auth/userModel");
 
+const sanitizeUser = (user) => {
+  const safeUser = user.toObject();
+  delete safeUser.password;
+  return safeUser;
+};
+
 
 // ================= GET ALL USERS =================
 
@@ -68,7 +74,7 @@ const createUser = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "User created successfully",
-      user,
+      user: sanitizeUser(user),
     });
 
   } catch (error) {
@@ -87,13 +93,7 @@ const createUser = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
 
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new: true,
-      }
-    );
+    const user = await User.findById(req.params.id);
 
     if (!user) {
       return res.status(404).json({
@@ -102,10 +102,20 @@ const updateUser = async (req, res) => {
       });
     }
 
+    user.name = req.body.name ?? user.name;
+    user.email = req.body.email ?? user.email;
+    user.role = req.body.role ?? user.role;
+
+    if (req.body.password) {
+      user.password = req.body.password;
+    }
+
+    await user.save();
+
     res.status(200).json({
       success: true,
       message: "User updated successfully",
-      user,
+      user: sanitizeUser(user),
     });
 
   } catch (error) {

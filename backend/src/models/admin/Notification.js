@@ -14,7 +14,18 @@ const notificationSchema = new mongoose.Schema(
       trim: true,
     },
 
+    type: {
+      type: String,
+      default: "info",
+      trim: true,
+    },
+
     receiver: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },

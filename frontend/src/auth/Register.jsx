@@ -28,7 +28,10 @@ function Register() {
     e.preventDefault();
 
     try {
-      const data = await registerUser(formData);
+      const data = await registerUser({
+        ...formData,
+        email: formData.email.trim().toLowerCase(),
+      });
 
       console.log(data);
 
@@ -50,7 +53,7 @@ function Register() {
       console.error(error);
 
       setSuccess(false);
-      setMessage(error?.response?.data?.message || "Registration Failed ❌");
+      setMessage(error?.message || "Registration Failed ❌");
     }
   };
 
@@ -109,6 +112,7 @@ function Register() {
               <input
                 type="email"
                 name="email"
+                autoComplete="username"
                 value={formData.email}
                 onChange={handleChange}
                 className="w-full p-2 outline-none text-gray-700 text-sm"
@@ -127,6 +131,7 @@ function Register() {
               <input
                 type="tel"
                 name="phone"
+                autoComplete="tel"
                 value={formData.phone}
                 onChange={handleChange}
                 className="w-full p-2 outline-none text-gray-700 text-sm"
@@ -161,6 +166,7 @@ function Register() {
               <input
                 type="password"
                 name="password"
+                autoComplete="new-password"
                 value={formData.password}
                 onChange={handleChange}
                 className="w-full p-2 outline-none text-gray-700 text-sm"

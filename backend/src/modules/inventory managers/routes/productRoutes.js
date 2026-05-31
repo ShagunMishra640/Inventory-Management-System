@@ -62,6 +62,11 @@ router.put(
 
 // ================= DELETE PRODUCT =================
 
-router.delete("/:id", protect, authorizeRoles("admin"), deleteProduct);
+router.delete(
+  "/:id",
+  protect,
+  authorizeRoles("admin", "inventory-manager"),
+  deleteProduct,
+);
 
 module.exports = router;

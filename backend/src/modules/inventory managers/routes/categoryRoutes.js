@@ -13,6 +13,7 @@ router.get("/:id", getSingleCategory);
 router.post("/create", createCategory);
 router.put("/update/:id", updateCategory);
 router.delete("/delete/:id", deleteCategory);
+router.delete("/:id", deleteCategory);
 
 
 module.exports = router;

@@ -7,6 +7,7 @@ const router = express.Router();
 const {
   createOrder,
   getOrders,
+  getOrderById,
   updateOrder,
   deleteOrder,
 } = require("../controllers/orderController");
@@ -17,6 +18,8 @@ const protect = require("../../../middlewares/authMiddleware");
 
 const authorizeRoles = require("../../../middlewares/roleMiddleware");
 
+const orderRoles = ["cashier", "admin", "inventory-manager"];
+
 // ================= CREATE ORDER =================
 
 router.post(
@@ -24,7 +27,17 @@ router.post(
 
   protect,
 
-  authorizeRoles("cashier", "admin"),
+  authorizeRoles(...orderRoles),
+
+  createOrder,
+);
+
+router.post(
+  "/",
+
+  protect,
+
+  authorizeRoles(...orderRoles),
 
   createOrder,
 );
@@ -36,9 +49,19 @@ router.get(
 
   protect,
 
-  authorizeRoles("cashier", "admin"),
+  authorizeRoles(...orderRoles),
 
   getOrders,
+);
+
+router.get(
+  "/:id",
+
+  protect,
+
+  authorizeRoles(...orderRoles),
+
+  getOrderById,
 );
 
 // ================= UPDATE ORDER =================
@@ -48,7 +71,17 @@ router.put(
 
   protect,
 
-  authorizeRoles("cashier", "admin"),
+  authorizeRoles(...orderRoles),
+
+  updateOrder,
+);
+
+router.put(
+  "/:id",
+
+  protect,
+
+  authorizeRoles(...orderRoles),
 
   updateOrder,
 );
@@ -60,7 +93,17 @@ router.delete(
 
   protect,
 
-  authorizeRoles("admin"),
+  authorizeRoles("admin", "inventory-manager"),
+
+  deleteOrder,
+);
+
+router.delete(
+  "/:id",
+
+  protect,
+
+  authorizeRoles("admin", "inventory-manager"),
 
   deleteOrder,
 );

@@ -38,7 +38,10 @@ function Login() {
       setIsLoading(true);
       setSuccess(false);
 
-      const data = await loginUser(formData);
+      const data = await loginUser({
+        ...formData,
+        email: formData.email.trim().toLowerCase(),
+      });
 
       const role = data.user?.role;
 
@@ -64,7 +67,7 @@ function Login() {
       }, 700);
     } catch (error) {
       setSuccess(false);
-      setMessage(error.response?.data?.message || "Login Failed");
+      setMessage(error?.message || "Login Failed");
     } finally {
       setIsLoading(false);
     }
@@ -111,6 +114,7 @@ function Login() {
                 type="email"
                 name="email"
                 placeholder="Enter your email"
+                autoComplete="username"
                 value={formData.email}
                 onChange={handleChange}
                 className="w-full p-2 outline-none text-gray-700 text-sm"
@@ -130,6 +134,7 @@ function Login() {
                 type={showPassword ? "text" : "password"}
                 name="password"
                 placeholder="Enter your password"
+                autoComplete="current-password"
                 value={formData.password}
                 onChange={handleChange}
                 className="w-full p-2 outline-none text-gray-700 text-sm"

@@ -23,8 +23,7 @@ const createStock = async (req, res) => {
 const getStocks = async (req, res) => {
   try {
     const stocks = await Stock.find()
-      .populate("productId")
-      .populate("warehouse");
+      .populate("productId");
 
     res.status(200).json({
       success: true,

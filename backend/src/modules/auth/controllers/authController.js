@@ -10,7 +10,8 @@ const sanitizeUser = (user) => {
 
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, password, role } = req.body;
+    const email = req.body.email?.trim().toLowerCase();
 
     const userExists = await User.findOne({
       email,
@@ -45,7 +46,8 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = req.body.email?.trim().toLowerCase();
 
     const user = await User.findOne({
       email,

@@ -124,6 +124,8 @@ app.use("/api/cart", cartRoutes);
 
 app.use("/api/order", cashierOrderRoutes);
 
+app.use("/api/orders", cashierOrderRoutes);
+
 app.use("/api/payment", paymentRoutes);
 
 app.use("/api/receipt", receiptRoutes);
@@ -181,5 +183,13 @@ app.use(errorMiddleware);
 // =========================
 // EXPORT APP
 // =========================
+
+if (require.main === module) {
+  const PORT = process.env.PORT || 5000;
+
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
 
 module.exports = app;
