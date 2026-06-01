@@ -1,4 +1,8 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models/auth/userModel");
+
+const normalizeRole = (role) =>
+  role ? String(role).toLowerCase().trim() : undefined;
 
 const protect = async (req, res, next) => {
   try {
@@ -15,7 +19,17 @@ const protect = async (req, res, next) => {
         process.env.JWT_SECRET || "mysecretkey",
       );
 
-      req.user = decoded;
+      let role = normalizeRole(decoded.role);
+
+      if (!role && decoded.id) {
+        const user = await User.findById(decoded.id).select("role");
+        role = normalizeRole(user?.role);
+      }
+
+      req.user = {
+        ...decoded,
+        role,
+      };
 
       next();
     } else {

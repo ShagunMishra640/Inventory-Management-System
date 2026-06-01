@@ -1,87 +1,146 @@
-import React, { useState } from 'react';
-import { useApp } from '../context/AppContext';
-import { ENDPOINTS } from '../api/config';
+import React, { useEffect, useState } from 'react';
+import { X, AlertCircle, CheckCircle } from 'lucide-react';
+import { createUser, updateUser } from '../controllers/userController';
 
-export default function AddUserModal({ isOpen, onClose }) {
-  const { fetchUsers } = useApp();
+const normalizeRole = (role = '') => {
+  const normalized = String(role).toLowerCase().trim();
+
+  if (normalized === 'manager' || normalized === 'inventory') {
+    return 'inventory-manager';
+  }
+
+  return normalized || 'cashier';
+};
+
+export default function AddUserModal({ isOpen, onClose, user, onSaved }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    role: 'Cashier',
-    status: 'Active'
+    password: '',
+    role: 'cashier',
+    status: 'Active',
   });
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    setError('');
+    setSuccess('');
+    setFormData({
+      name: user?.name || '',
+      email: user?.email || '',
+      password: '',
+      role: normalizeRole(user?.role),
+      status: user?.status || 'Active',
+    });
+  }, [isOpen, user]);
 
   if (!isOpen) return null;
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setSuccess('');
     setIsSubmitting(true);
 
-    try {
-      const response = await fetch(ENDPOINTS.USERS, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          ...formData,
-          login: new Date().toISOString().slice(0, 16).replace('T', ' ')
-        })
-      });
+    if (!formData.name.trim()) {
+      setError('Full name is required');
+      setIsSubmitting(false);
+      return;
+    }
 
-      if (!response.ok) {
-        throw new Error('Failed to add user');
+    if (!formData.email.trim()) {
+      setError('Email is required');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!user && !formData.password.trim()) {
+      setError('Password is required');
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const payload = {
+        name: formData.name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        role: formData.role,
+      };
+
+      if (formData.password.trim()) {
+        payload.password = formData.password;
       }
 
-      await fetchUsers();
+      const response = user
+        ? await updateUser(user._id || user.id, payload)
+        : await createUser(payload);
 
-      setFormData({
-        name: '',
-        email: '',
-        role: 'Cashier',
-        status: 'Active'
-      });
+      setSuccess(`User "${formData.name}" ${user ? 'updated' : 'added'} successfully!`);
+      onSaved?.(response?.data?.user);
 
-      onClose();
-    } catch (error) {
-      alert(error.message);
+      setTimeout(() => {
+        setFormData({
+          name: '',
+          email: '',
+          password: '',
+          role: 'cashier',
+          status: 'Active',
+        });
+        setSuccess('');
+        onClose();
+      }, 800);
+    } catch (err) {
+      setError(err?.response?.data?.message || err.message || 'Failed to save user. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-
-      <div className="bg-white w-full max-w-xl rounded-2xl shadow-xl overflow-hidden">
-
-        {/* HEADER */}
-        <div className="p-5 border-b flex justify-between items-center">
-          <h2 className="font-bold text-lg">Add New User</h2>
-
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+      <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-gradient-to-r from-indigo-50 to-blue-50">
+          <h2 className="font-bold text-lg text-slate-900">{user ? 'Edit User' : 'Add New User'}</h2>
           <button
             onClick={onClose}
-            className="text-2xl font-bold text-gray-500 hover:text-black"
+            className="text-slate-400 hover:text-slate-600 transition-colors"
+            type="button"
           >
-            ✕
+            <X size={24} />
           </button>
         </div>
 
-        {/* FORM */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        {error && (
+          <div className="mx-6 mt-6 p-4 bg-red-50 border border-red-200 rounded-2xl flex gap-3 items-start">
+            <AlertCircle size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-red-700 font-medium">{error}</p>
+          </div>
+        )}
 
-          {/* NAME */}
+        {success && (
+          <div className="mx-6 mt-6 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex gap-3 items-start">
+            <CheckCircle size={20} className="text-emerald-600 flex-shrink-0 mt-0.5" />
+            <p className="text-emerald-700 font-medium">{success}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           <div>
-            <label className="text-sm font-medium">Full Name</label>
+            <label className="text-sm font-bold text-slate-900 block mb-2">Full Name *</label>
             <input
               type="text"
               name="name"
@@ -89,13 +148,12 @@ export default function AddUserModal({ isOpen, onClose }) {
               onChange={handleChange}
               placeholder="Enter full name"
               required
-              className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50 text-slate-900"
             />
           </div>
 
-          {/* EMAIL */}
           <div>
-            <label className="text-sm font-medium">Email</label>
+            <label className="text-sm font-bold text-slate-900 block mb-2">Email *</label>
             <input
               type="email"
               name="email"
@@ -103,46 +161,59 @@ export default function AddUserModal({ isOpen, onClose }) {
               onChange={handleChange}
               placeholder="user@example.com"
               required
-              className="w-full mt-1 px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50 text-slate-900"
             />
           </div>
 
-          {/* ROLE */}
-          <div>
-            <label className="text-sm font-medium">Role</label>
-            <select
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className="w-full mt-1 px-3 py-2 border rounded-lg"
-            >
-              <option value="Cashier">Cashier</option>
-              <option value="Manager">Manager</option>
-              <option value="Admin">Admin</option>
-            </select>
+          {!user && (
+            <div>
+              <label className="text-sm font-bold text-slate-900 block mb-2">Password *</label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Set a temporary password"
+                required
+                className="w-full px-4 py-3 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50 text-slate-900"
+              />
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-bold text-slate-900 block mb-2">Role</label>
+              <select
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50 text-slate-900 cursor-pointer"
+              >
+                <option value="cashier">Cashier</option>
+                <option value="inventory-manager">Inventory Manager</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-sm font-bold text-slate-900 block mb-2">Status</label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-slate-50 text-slate-900 cursor-pointer"
+              >
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
           </div>
 
-          {/* STATUS */}
-          <div>
-            <label className="text-sm font-medium">Status</label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="w-full mt-1 px-3 py-2 border rounded-lg"
-            >
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
-
-          {/* BUTTONS */}
-          <div className="flex justify-end gap-3 pt-4">
-
+          <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+              className="px-6 py-2.5 bg-slate-100 text-slate-900 rounded-2xl hover:bg-slate-200 font-bold transition-all"
             >
               Cancel
             </button>
@@ -150,15 +221,12 @@ export default function AddUserModal({ isOpen, onClose }) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+              className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 disabled:from-slate-300 disabled:to-slate-300 text-white rounded-2xl font-bold transition-all shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Adding...' : 'Add User'}
+              {isSubmitting ? 'Processing...' : (user ? 'Update User' : 'Add User')}
             </button>
-
           </div>
-
         </form>
-
       </div>
     </div>
   );

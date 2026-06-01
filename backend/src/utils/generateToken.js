@@ -1,10 +1,13 @@
 const jwt = require("jsonwebtoken");
 
+const normalizeRole = (role) =>
+  role ? String(role).toLowerCase().trim() : undefined;
+
 const generateToken = (user) => {
   return jwt.sign(
     {
       id: user._id,
-      role: user.role,
+      role: normalizeRole(user.role),
     },
 
     process.env.JWT_SECRET,

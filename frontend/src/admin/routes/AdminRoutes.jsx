@@ -3,6 +3,8 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "../pages/Dashboard";
 import Inventory from "../pages/Inventory";
 import Product from "../pages/Product";
+import AddProduct from "../pages/AddProduct";
+import EditProduct from "../pages/EditProduct";
 import Order from "../pages/Order";
 import Users from "../pages/Users";
 import Report from "../pages/Report";
@@ -34,6 +36,8 @@ function AdminRoutes() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="inventory" element={<Inventory />} />
         <Route path="product" element={<Product />} />
+        <Route path="add-product" element={<AddProduct />} />
+        <Route path="edit-product/:id" element={<EditProduct />} />
         <Route path="order" element={<Order />} />
         <Route path="users" element={<Users />} />
         <Route path="report" element={<Report />} />

@@ -32,13 +32,13 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="w-64 bg-white border-r border-slate-200 flex flex-col justify-between p-4 h-full flex-shrink-0">
+    <aside className="w-64 bg-[#071a33] border-r border-[#0b2545] flex flex-col justify-between p-4 h-full flex-shrink-0 shadow-xl">
       <div>
         <div className="mb-8 px-2 py-1">
-          <h1 className="text-xl font-bold text-brand tracking-tight">
+          <h1 className="text-xl font-bold text-white tracking-tight">
             RetailPOS
           </h1>
-          <p className="text-xs text-slate-400">Admin Panel</p>
+          <p className="text-xs text-blue-200/80">Admin Panel</p>
         </div>
 
         <nav className="space-y-1">
@@ -51,8 +51,8 @@ export default function Sidebar() {
                 to={item.path}
                 className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   isActive
-                    ? "bg-brand-light text-brand"
-                    : "text-slate-600 hover:bg-slate-50"
+                    ? "bg-blue-500 text-white shadow-lg shadow-blue-950/30"
+                    : "text-blue-100 hover:bg-white/10 hover:text-white"
                 }`}
               >
                 <Icon size={18} />
@@ -65,7 +65,7 @@ export default function Sidebar() {
 
       <button
         onClick={handleLogout}
-        className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors"
+        className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-sm font-medium text-blue-100 hover:bg-red-500/15 hover:text-red-100 transition-colors"
       >
         <LogOut size={18} />
         <span>Logout</span>

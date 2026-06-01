@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { getUsers as getUsersRequest } from "../controllers/userController";
 
 const AdminAppContext = createContext(null);
 
@@ -6,23 +7,50 @@ export function AdminAppProvider({ children }) {
   const [user] = useState({ name: "Admin", role: "Administrator" });
 
   const [products] = useState([
-    { id: 1, name: "Wireless Mouse", sku: "WM-100", stock: 120, price: 1200 },
+    {
+      id: 1,
+      name: "Wireless Mouse",
+      sku: "WM-100",
+      stock: 120,
+      price: 1200,
+      image:
+        "https://images.unsplash.com/photo-1527814050087-3793815479db?auto=format&fit=crop&w=600&q=80",
+    },
     {
       id: 2,
       name: "Mechanical Keyboard",
       sku: "MK-200",
       stock: 80,
       price: 2500,
+      image:
+        "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?auto=format&fit=crop&w=600&q=80",
     },
-    { id: 3, name: "Laptop Cooler", sku: "LC-300", stock: 50, price: 900 },
+    {
+      id: 3,
+      name: "Laptop",
+      sku: "LT-300",
+      stock: 50,
+      price: 45000,
+      image:
+        "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=600&q=80",
+    },
   ]);
 
   const [cart, setCart] = useState([]);
   const addToCart = (product) => setCart((c) => [...c, { ...product, qty: 1 }]);
   const removeFromCart = (id) => setCart((c) => c.filter((i) => i.id !== id));
 
-  const loadingStates = { dashboard: false, products: false, users: false };
-  const errorStates = { dashboard: null, products: null, users: null };
+  const [usersList, setUsersList] = useState([]);
+  const [loadingStates, setLoadingStates] = useState({
+    dashboard: false,
+    products: false,
+    users: false,
+  });
+  const [errorStates, setErrorStates] = useState({
+    dashboard: null,
+    products: null,
+    users: null,
+  });
 
   const dashboardStats = {
     totalRevenue: "₹1,200,000",
@@ -68,12 +96,38 @@ export function AdminAppProvider({ children }) {
   };
 
   const fetchProducts = async () => {};
-  const fetchUsers = async () => {};
+  const fetchUsers = useCallback(async (params) => {
+    setLoadingStates((prev) => ({ ...prev, users: true }));
+    setErrorStates((prev) => ({ ...prev, users: null }));
+
+    try {
+      const response = await getUsersRequest(params);
+      const data = response?.data;
+      const users = Array.isArray(data) ? data : data?.users || [];
+
+      setUsersList(Array.isArray(users) ? users : []);
+      return users;
+    } catch (error) {
+      const message =
+        error?.response?.data?.message || error?.message || "Failed to load users";
+      setUsersList([]);
+      setErrorStates((prev) => ({ ...prev, users: message }));
+      throw error;
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, users: false }));
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsers().catch(() => {});
+  }, [fetchUsers]);
 
   return (
     <AdminAppContext.Provider
       value={{
         user,
+        usersList,
+        setUsersList,
         products,
         cart,
         addToCart,
@@ -98,6 +152,8 @@ export function useApp() {
     return {
       user: { name: "Admin", role: "Administrator" },
       products: [],
+      usersList: [],
+      setUsersList: () => {},
       cart: [],
       addToCart: () => {},
       removeFromCart: () => {},

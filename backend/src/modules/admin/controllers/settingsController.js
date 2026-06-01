@@ -2,10 +2,20 @@
 
 // Dummy settings data
 let settings = {
-  companyName: "My Inventory Store",
-  companyEmail: "admin@gmail.com",
+  storeName: "RetailPOS System",
+  companyName: "RetailPOS System",
+  email: "admin@retailpos.com",
+  companyEmail: "admin@retailpos.com",
+  phone: "+1 (555) 123-4567",
   currency: "INR",
+  timezone: "Asia/Kolkata",
   lowStockLimit: 10,
+  emailNotifications: true,
+  smsNotifications: false,
+  darkMode: false,
+  autoBackup: true,
+  backupFrequency: "daily",
+  sessionTimeout: "30",
 };
 
 
@@ -35,20 +45,15 @@ const getSettings = async (req, res) => {
 const updateSettings = async (req, res) => {
   try {
 
-    const {
-      companyName,
-      companyEmail,
-      currency,
-      lowStockLimit,
-    } = req.body;
-
-    // Update settings
     settings = {
-      companyName,
-      companyEmail,
-      currency,
-      lowStockLimit,
+      ...settings,
+      ...req.body,
     };
+
+    if (req.body.storeName) settings.companyName = req.body.storeName;
+    if (req.body.companyName) settings.storeName = req.body.companyName;
+    if (req.body.email) settings.companyEmail = req.body.email;
+    if (req.body.companyEmail) settings.email = req.body.companyEmail;
 
     res.status(200).json({
       success: true,

@@ -1,13 +1,17 @@
 import API from '../../api/axios';
 
-export async function getSalesReport(params) {
-  return API.get('/reports/sales', { params });
+export async function getStockReport(params) {
+  return API.get('/reports/stock', { params });
 }
 
-export async function getInventoryReport(params) {
-  return API.get('/reports/inventory', { params });
+export async function getLowStockReport(params) {
+  return API.get('/reports/low-stock', { params });
 }
 
-export async function getRevenueSummary(params) {
-  return API.get('/reports/revenue', { params });
+export async function getPurchaseReport(params) {
+  return API.get('/reports/purchases', { params });
+}
+
+export async function getSupplierReport(params) {
+  return API.get('/reports/suppliers', { params });
 }

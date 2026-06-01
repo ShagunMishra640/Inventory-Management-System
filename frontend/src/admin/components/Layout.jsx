@@ -5,6 +5,10 @@ import {
   FaShoppingCart,
   FaBox,
   FaUsers,
+  FaBoxes,
+  FaClipboardList,
+  FaChartBar,
+  FaCog,
   FaSignOutAlt,
   FaBell,
 } from "react-icons/fa";
@@ -20,7 +24,11 @@ export default function Layout() {
     { name: "Dashboard", path: "/admin/dashboard", icon: FaTachometerAlt },
     { name: "POS Terminal", path: "/admin/terminal", icon: FaShoppingCart },
     { name: "Inventory", path: "/admin/inventory", icon: FaBox },
+    { name: "Products", path: "/admin/product", icon: FaBoxes },
+    { name: "Orders", path: "/admin/order", icon: FaClipboardList },
     { name: "Users", path: "/admin/users", icon: FaUsers },
+    { name: "Reports", path: "/admin/report", icon: FaChartBar },
+    { name: "Settings", path: "/admin/setting", icon: FaCog },
   ];
 
   const handleLogout = () => {
@@ -33,13 +41,13 @@ export default function Layout() {
     <div className="flex h-screen w-screen overflow-hidden bg-[#F8FAFC]">
 
       {/* SIDEBAR */}
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col justify-between p-4">
+      <aside className="w-64 bg-[#071a33] border-r border-[#0b2545] flex flex-col justify-between p-4 shadow-xl">
 
         <div>
           {/* LOGO */}
           <div className="mb-8 px-2">
-            <h1 className="text-xl font-bold text-blue-600">RetailPOS</h1>
-            <p className="text-xs text-slate-400">Omnichannel System</p>
+            <h1 className="text-xl font-bold text-white">RetailPOS</h1>
+            <p className="text-xs text-blue-200/80">Omnichannel System</p>
           </div>
 
           {/* MENU */}
@@ -56,8 +64,8 @@ export default function Layout() {
                   onClick={() => navigate(item.path)}
                   className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-sm font-medium transition ${
                     isActive
-                      ? "bg-blue-100 text-blue-600"
-                      : "text-slate-600 hover:bg-slate-50"
+                      ? "bg-blue-500 text-white shadow-lg shadow-blue-950/30"
+                      : "text-blue-100 hover:bg-white/10 hover:text-white"
                   }`}
                 >
                   <Icon size={18} />
@@ -71,7 +79,7 @@ export default function Layout() {
         {/* LOGOUT */}
         <button
           onClick={handleLogout}
-          className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600"
+          className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-sm font-medium text-blue-100 hover:bg-red-500/15 hover:text-red-100"
         >
           <FaSignOutAlt size={18} />
           <span>Logout</span>

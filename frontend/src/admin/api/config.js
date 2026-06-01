@@ -7,6 +7,8 @@ export const ENDPOINTS = {
   PRODUCTS: `${BASE_URL}/products`,
   LOGIN: `${BASE_URL}/auth/login`,
   REGISTER: `${BASE_URL}/auth/register`,
+  ADMIN_LOGIN: `${BASE_URL}/admin/login`,
+  ADMIN_REGISTER: `${BASE_URL}/admin/register`,
   ORDERS: `${BASE_URL}/orders`,
   CART: `${BASE_URL}/cart`,
 };

@@ -1,8 +1,30 @@
+import { useEffect, useState } from "react";
+import API from "../../api/axios";
+import { CASHIER_ENDPOINTS } from "../api/config";
+
 function Payments() {
-  const payments = [
-    { id: "PAY001", order: "ORD001", amount: 450, method: "UPI" },
-    { id: "PAY002", order: "ORD002", amount: 320, method: "Cash" },
-  ];
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchPayments = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const response = await API.get(CASHIER_ENDPOINTS.PAYMENTS);
+        setPayments(response.data?.payments || response.data?.data || []);
+      } catch (err) {
+        setError(
+          err.response?.data?.message || err.message || "Unable to load payments",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPayments();
+  }, []);
 
   const summaryCards = [
     { label: "Cash Payments", value: "₹8,250" },
@@ -30,26 +52,48 @@ function Payments() {
       </div>
 
       <div className="bg-white rounded-3xl shadow overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-100">
-            <tr>
-              <th className="p-4">Payment ID</th>
-              <th className="p-4">Order ID</th>
-              <th className="p-4">Amount</th>
-              <th className="p-4">Method</th>
-            </tr>
-          </thead>
-          <tbody>
-            {payments.map((payment) => (
-              <tr key={payment.id} className="border-b last:border-b-0">
-                <td className="p-4">{payment.id}</td>
-                <td className="p-4">{payment.order}</td>
-                <td className="p-4">₹{payment.amount}</td>
-                <td className="p-4">{payment.method}</td>
+        {loading ? (
+          <div className="p-6 text-center text-gray-500">Loading payments...</div>
+        ) : error ? (
+          <div className="p-6 text-center text-red-600">{error}</div>
+        ) : (
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-100">
+              <tr>
+                <th className="p-4">Payment ID</th>
+                <th className="p-4">Order ID</th>
+                <th className="p-4">Amount</th>
+                <th className="p-4">Method</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {payments.length ? (
+                payments.map((payment) => {
+                  const paymentId = payment._id || payment.id;
+                  const orderId =
+                    payment.order?.orderNumber || payment.order || payment.orderId || "—";
+                  const amount = payment.amount || payment.totalAmount || "—";
+                  const method = payment.method || payment.paymentMethod || "—";
+
+                  return (
+                    <tr key={paymentId} className="border-b last:border-b-0">
+                      <td className="p-4">{paymentId}</td>
+                      <td className="p-4">{orderId}</td>
+                      <td className="p-4">₹{amount}</td>
+                      <td className="p-4">{method}</td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={4} className="p-6 text-center text-gray-500">
+                    No payments found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
