@@ -28,6 +28,13 @@ const productSchema = new mongoose.Schema(
     stock: {
       type: Number,
       default: 0,
+      min: 0,
+    },
+
+    minStock: {
+      type: Number,
+      default: 10,
+      min: 0,
     },
 
     category: {
@@ -48,6 +55,35 @@ const productSchema = new mongoose.Schema(
     description: {
       type: String,
       default: "",
+    },
+
+    warehouse: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    supplier: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    supplierContact: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    discount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    tags: {
+      type: [String],
+      default: [],
     },
   },
   {

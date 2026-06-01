@@ -1,6 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import Sidebar from "../components/Sidebar";
-import API from "../../api/axios";
+import {
+  createStock,
+  deleteStock,
+  getStocks,
+  updateStock,
+} from "../services/stockService";
+import { getProducts } from "../services/productService";
+import formatCurrency from "../utils/formatCurrency";
+import {
+  calculateLowStock,
+  calculateOutOfStock,
+  calculateStockValue,
+  calculateTotalStock,
+  getProductMinStock,
+  getProductPrice,
+  getProductStock,
+  getProductStockStatus,
+} from "../utils/stockCalculator";
 import {
   FaBell,
   FaSearch,
@@ -14,61 +31,72 @@ import {
   FaTrash,
 } from "react-icons/fa";
 
-const getStockStatus = (stock, minStock = 10) => {
-  if (stock <= 0) {
-    return "Out Of Stock";
-  }
-
-  if (stock <= minStock) {
-    return "Low Stock";
-  }
-
-  return "In Stock";
+const initialStockForm = {
+  productId: "",
+  qty: "",
+  reason: "",
 };
 
-const formatCurrency = (amount) =>
-  `Rs. ${Number(amount || 0).toLocaleString("en-IN")}`;
+const normalizeProducts = (response) => {
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response)) return response;
+  return [];
+};
 
 const Stock = () => {
   const [stocks, setStocks] = useState([]);
+  const [products, setProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingStock, setEditingStock] = useState(null);
+  const [formData, setFormData] = useState(initialStockForm);
+  const [isSaving, setIsSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState("");
+
+  const loadStocks = async () => {
+    try {
+      setIsLoading(true);
+      setError("");
+
+      const [stockData, productResponse] = await Promise.all([
+        getStocks(),
+        getProducts(),
+      ]);
+
+      setStocks(stockData);
+      setProducts(normalizeProducts(productResponse));
+    } catch (err) {
+      setError(err.response?.data?.message || "Stock data load nahi hua");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchStocks = async () => {
-      try {
-        setIsLoading(true);
-        setError("");
-
-        const response = await API.get("/stocks");
-        setStocks(Array.isArray(response.data?.data) ? response.data.data : []);
-      } catch (err) {
-        setError(err.response?.data?.message || "Stock data load nahi hua");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchStocks();
+    loadStocks();
   }, []);
 
   const stockRows = useMemo(
     () =>
       stocks.map((item) => {
         const product = item.productId || {};
-        const stock = Number(item.qty || 0);
-        const minStock = Number(product.minStock || 10);
-        const price = Number(product.sellingPrice || 0);
+        const stock = getProductStock(item);
+        const minStock = getProductMinStock(item);
+        const price = getProductPrice(item);
 
         return {
+          _id: item._id,
           id: product.sku || item._id,
+          productId: product._id || item.productId,
           product: product.name || "Unknown Product",
           category: product.category || "Uncategorized",
           stock,
           minStock,
+          reason: item.reason || "",
           value: formatCurrency(stock * price),
-          status: getStockStatus(stock, minStock),
+          status: getProductStockStatus({ stock, minStock }),
         };
       }),
     [stocks],
@@ -89,23 +117,97 @@ const Stock = () => {
   }, [searchTerm, stockRows]);
 
   const stats = useMemo(() => {
-    const totalStock = stockRows.reduce((sum, item) => sum + item.stock, 0);
-    const lowStock = stockRows.filter((item) => item.status === "Low Stock").length;
-    const outOfStock = stockRows.filter(
-      (item) => item.status === "Out Of Stock",
-    ).length;
-    const totalValue = stocks.reduce((sum, item) => {
-      const price = Number(item.productId?.sellingPrice || 0);
-      return sum + Number(item.qty || 0) * price;
-    }, 0);
-
     return {
-      totalStock,
-      lowStock,
-      outOfStock,
-      totalValue,
+      totalStock: calculateTotalStock(stocks),
+      lowStock: calculateLowStock(stocks),
+      outOfStock: calculateOutOfStock(stocks),
+      totalValue: calculateStockValue(stocks),
     };
-  }, [stockRows, stocks]);
+  }, [stocks]);
+
+  const openAddModal = () => {
+    setEditingStock(null);
+    setFormData(initialStockForm);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (stock) => {
+    setEditingStock(stock);
+    setFormData({
+      productId: stock.productId || "",
+      qty: String(stock.stock || ""),
+      reason: stock.reason || "",
+    });
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    if (isSaving) return;
+    setIsModalOpen(false);
+    setEditingStock(null);
+    setFormData(initialStockForm);
+  };
+
+  const handleFormChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((current) => ({
+      ...current,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!formData.productId || !formData.qty || !formData.reason.trim()) {
+      setError("Product, quantity ani reason required aahe");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      setError("");
+
+      const payload = {
+        productId: formData.productId,
+        qty: Number(formData.qty),
+        reason: formData.reason.trim(),
+      };
+
+      if (editingStock?._id) {
+        await updateStock(editingStock._id, payload);
+      } else {
+        await createStock(payload);
+      }
+
+      setIsModalOpen(false);
+      setEditingStock(null);
+      setFormData(initialStockForm);
+      await loadStocks();
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Stock save nahi hua");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async (stock) => {
+    if (!stock?._id) return;
+
+    const confirmed = window.confirm(`${stock.product} stock delete karaycha ka?`);
+    if (!confirmed) return;
+
+    try {
+      setDeletingId(stock._id);
+      setError("");
+      await deleteStock(stock._id);
+      await loadStocks();
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Stock delete nahi hua");
+    } finally {
+      setDeletingId("");
+    }
+  };
 
   return (
     <div className="flex bg-[#f4f7fe] min-h-screen">
@@ -206,7 +308,11 @@ const Stock = () => {
                 Filter
               </button>
 
-              <button className="bg-blue-600 text-white px-6 py-3 rounded-xl flex items-center gap-2 font-semibold">
+              <button
+                type="button"
+                onClick={openAddModal}
+                className="bg-blue-600 text-white px-6 py-3 rounded-xl flex items-center gap-2 font-semibold"
+              >
                 <FaPlus />
                 Add Stock
               </button>
@@ -286,11 +392,20 @@ const Stock = () => {
 
                       <td className="p-5">
                         <div className="flex justify-center gap-3">
-                          <button className="bg-blue-100 text-blue-600 p-3 rounded-xl">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(item)}
+                            className="bg-blue-100 text-blue-600 p-3 rounded-xl"
+                          >
                             <FaEdit />
                           </button>
 
-                          <button className="bg-red-100 text-red-600 p-3 rounded-xl">
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(item)}
+                            disabled={deletingId === item._id}
+                            className="bg-red-100 text-red-600 p-3 rounded-xl disabled:opacity-50"
+                          >
                             <FaTrash />
                           </button>
                         </div>
@@ -359,6 +474,88 @@ const Stock = () => {
           </div>
         </div>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
+            <div className="border-b px-6 py-5">
+              <h2 className="text-2xl font-bold text-[#061539]">
+                {editingStock ? "Edit Stock" : "Add Stock"}
+              </h2>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5 p-6">
+              <div>
+                <label className="mb-2 block font-semibold text-gray-700">
+                  Product
+                </label>
+                <select
+                  name="productId"
+                  value={formData.productId}
+                  onChange={handleFormChange}
+                  className="w-full rounded-xl border bg-[#f4f7fe] px-4 py-3 outline-none"
+                  required
+                >
+                  <option value="">Select product</option>
+                  {products.map((product) => (
+                    <option key={product._id} value={product._id}>
+                      {product.name} {product.sku ? `(${product.sku})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block font-semibold text-gray-700">
+                  Quantity
+                </label>
+                <input
+                  type="number"
+                  name="qty"
+                  min="1"
+                  value={formData.qty}
+                  onChange={handleFormChange}
+                  className="w-full rounded-xl border bg-[#f4f7fe] px-4 py-3 outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block font-semibold text-gray-700">
+                  Reason
+                </label>
+                <input
+                  type="text"
+                  name="reason"
+                  value={formData.reason}
+                  onChange={handleFormChange}
+                  placeholder="Initial stock, purchase, adjustment..."
+                  className="w-full rounded-xl border bg-[#f4f7fe] px-4 py-3 outline-none"
+                  required
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="rounded-xl bg-gray-100 px-5 py-3 font-semibold text-gray-700"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white disabled:opacity-60"
+                >
+                  {isSaving ? "Saving..." : editingStock ? "Update Stock" : "Add Stock"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

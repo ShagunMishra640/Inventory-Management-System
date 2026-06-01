@@ -27,6 +27,12 @@ const purchaseOrderSchema = new mongoose.Schema({
   ],
 
   totalAmount: Number,
+
+  status: {
+    type: String,
+    enum: ["Pending", "Processing", "Received", "Cancelled"],
+    default: "Pending",
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model("PurchaseOrder", purchaseOrderSchema);

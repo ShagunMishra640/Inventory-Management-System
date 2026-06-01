@@ -2,10 +2,10 @@ const SystemSettings = require("../../../models/admin/SystemSettings");
 
 // ⚙️ GET SETTINGS
 const getSettingsService = async () => {
-  const settings = await SystemSettings.findOne();
+  let settings = await SystemSettings.findOne();
 
   if (!settings) {
-    throw new Error("Settings not found");
+    settings = await SystemSettings.create({});
   }
 
   return settings;
@@ -19,6 +19,8 @@ const updateSettingsService = async (updateData) => {
     {
       new: true,
       upsert: true,
+      runValidators: true,
+      setDefaultsOnInsert: true,
     }
   );
 

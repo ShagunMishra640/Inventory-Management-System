@@ -1,4 +1,6 @@
+import { useEffect, useMemo, useState } from "react";
 import Sidebar from "../components/Sidebar";
+import { getSalesStats } from "../services/salesService";
 
 import {
   FaBell,
@@ -12,7 +14,7 @@ import {
   FaWallet,
 } from "react-icons/fa";
 
-const salesData = [
+const fallbackSalesData = [
   {
     id: "#SALE001",
     customer: "Rutika Pujari",
@@ -51,6 +53,73 @@ const salesData = [
 ];
 
 const Sales = () => {
+  const [salesData, setSalesData] = useState(fallbackSalesData);
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    totalOrders: 0,
+    growthRate: 0,
+    netProfit: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const formatCurrency = (amount) =>
+    new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(Number(amount || 0));
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSales = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        const data = await getSalesStats();
+
+        if (isMounted) {
+          setStats(data);
+          setSalesData(data.sales);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err?.response?.data?.message || err.message || "Sales backend not responding");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadSales();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const chartHeights = useMemo(() => {
+    if (!salesData.length || salesData === fallbackSalesData) {
+      return [120, 180, 150, 250, 210, 300];
+    }
+
+    const monthlyTotals = Array(6).fill(0);
+
+    salesData.forEach((sale) => {
+      const month = new Date(sale.raw?.createdAt || sale.date).getMonth();
+
+      if (month >= 0 && month < 6) {
+        monthlyTotals[month] += sale.amount;
+      }
+    });
+
+    const max = Math.max(...monthlyTotals, 1);
+    return monthlyTotals.map((total) => Math.max(40, Math.round((total / max) * 300)));
+  }, [salesData]);
+
   return (
     <div className="flex bg-[#f5f7fb] min-h-screen">
 
@@ -143,6 +212,12 @@ const Sales = () => {
             </button>
           </div>
 
+          {error && (
+            <div className="mb-8 rounded-2xl border border-red-200 bg-red-50 px-6 py-4 text-red-700">
+              {error}
+            </div>
+          )}
+
           {/* STATS */}
 
           <div className="grid grid-cols-4 gap-8 mb-10">
@@ -160,7 +235,7 @@ const Sales = () => {
                   </p>
 
                   <h1 className="text-5xl font-bold mt-4">
-                    ₹8.5L
+                    {loading ? "..." : formatCurrency(stats.totalRevenue)}
                   </h1>
 
                   <div className="flex items-center gap-2 mt-4 text-green-600">
@@ -195,7 +270,7 @@ const Sales = () => {
                   </p>
 
                   <h1 className="text-5xl font-bold mt-4">
-                    1,250
+                    {loading ? "..." : stats.totalOrders}
                   </h1>
 
                   <div className="flex items-center gap-2 mt-4 text-blue-600">
@@ -230,7 +305,7 @@ const Sales = () => {
                   </p>
 
                   <h1 className="text-5xl font-bold mt-4">
-                    24%
+                    {loading ? "..." : `${stats.growthRate}%`}
                   </h1>
 
                   <div className="flex items-center gap-2 mt-4 text-purple-600">
@@ -265,7 +340,7 @@ const Sales = () => {
                   </p>
 
                   <h1 className="text-5xl font-bold mt-4">
-                    ₹3.2L
+                    {loading ? "..." : formatCurrency(stats.netProfit)}
                   </h1>
 
                   <div className="flex items-center gap-2 mt-4 text-red-500">
@@ -317,7 +392,7 @@ const Sales = () => {
 
             <div className="h-[320px] flex items-end justify-between gap-5">
 
-              {[120, 180, 150, 250, 210, 300].map((height, index) => (
+              {chartHeights.map((height, index) => (
                 <div
                   key={index}
                   className="flex flex-col items-center w-full"
@@ -409,7 +484,7 @@ const Sales = () => {
                     </td>
 
                     <td className="p-6 text-2xl font-bold text-green-600">
-                      {sale.amount}
+                      {typeof sale.amount === "number" ? formatCurrency(sale.amount) : sale.amount}
                     </td>
 
                     <td className="p-6 text-lg text-gray-500">
@@ -420,9 +495,9 @@ const Sales = () => {
 
                       <span
                         className={`px-5 py-3 rounded-xl text-lg font-medium ${
-                          sale.status === "Completed"
+                          sale.status === "COMPLETED" || sale.status === "Completed"
                             ? "bg-green-100 text-green-700"
-                            : sale.status === "Pending"
+                            : sale.status === "PLACED" || sale.status === "Pending"
                             ? "bg-orange-100 text-orange-700"
                             : "bg-red-100 text-red-700"
                         }`}
@@ -441,7 +516,7 @@ const Sales = () => {
             <div className="flex justify-between items-center p-8 border-t">
 
               <p className="text-gray-500 text-lg">
-                Showing 1 to 4 of 1250 sales
+                Showing 1 to {salesData.length} of {salesData.length} sales
               </p>
 
               <div className="flex items-center gap-4">

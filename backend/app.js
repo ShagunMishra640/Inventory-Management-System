@@ -63,6 +63,8 @@ const logoutRoutes = require("./src/modules/auth/routes/logoutRoutes");
 // ADMIN
 
 const adminRoutes = require("./src/modules/admin/routes/adminRoutes");
+const reportRoutes = require("./src/modules/admin/routes/reportRoutes");
+const settingsRoutes = require("./src/modules/admin/routes/settingsRoutes");
 
 // CASHIER
 
@@ -96,6 +98,10 @@ const stockRoutes = require("./src/modules/inventory managers/routes/stockRoutes
 
 const purchaseOrderRoutes = require("./src/modules/inventory managers/routes/purchaseOrderRoutes");
 
+const salesRoutes = require("./src/modules/inventory managers/routes/salesRoutes");
+
+const managerRoutes = require("./src/modules/inventory managers/routes/managerRoutes");
+
 // =========================
 // CONTROLLERS
 // =========================
@@ -117,6 +123,8 @@ app.use("/api/auth", logoutRoutes);
 // ADMIN
 
 app.use("/api/admin", adminRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/settings", settingsRoutes);
 
 // CASHIER
 
@@ -153,6 +161,10 @@ app.use("/api/suppliers", supplierRoutes);
 app.use("/api/stocks", stockRoutes);
 
 app.use("/api/purchase-orders", purchaseOrderRoutes);
+
+app.use("/api/sales", salesRoutes);
+
+app.use("/api/manager/dashboard", managerRoutes);
 
 // =========================
 // EXTRA PRODUCT ROUTES

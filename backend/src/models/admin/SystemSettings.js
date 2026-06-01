@@ -4,7 +4,52 @@ const systemSettingsSchema = new mongoose.Schema(
   {
     companyName: {
       type: String,
-      required: true,
+      default: "My Inventory Store",
+    },
+
+    companyEmail: {
+      type: String,
+      default: "admin@gmail.com",
+    },
+
+    mobileNumber: {
+      type: String,
+      default: "+91 9876543210",
+    },
+
+    role: {
+      type: String,
+      default: "Inventory Admin",
+    },
+
+    lowStockAlerts: {
+      type: Boolean,
+      default: true,
+    },
+
+    autoReports: {
+      type: Boolean,
+      default: true,
+    },
+
+    cloudBackup: {
+      type: Boolean,
+      default: false,
+    },
+
+    darkMode: {
+      type: Boolean,
+      default: true,
+    },
+
+    twoFactorAuth: {
+      type: Boolean,
+      default: true,
+    },
+
+    lowStockLimit: {
+      type: Number,
+      default: 10,
     },
 
     timezone: {

@@ -37,7 +37,9 @@ const getLowStockReport = async (req, res) => {
   try {
 
     const lowStockProducts = await Product.find({
-      stock: { $lt: 10 },
+      $expr: {
+        $lte: ["$stock", "$minStock"],
+      },
     });
 
     res.status(200).json({

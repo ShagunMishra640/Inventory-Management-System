@@ -1,4 +1,7 @@
+import { useEffect, useMemo, useState } from "react";
 import Sidebar from "../components/Sidebar";
+import { getReports } from "../services/reportService";
+import exportReport from "../utils/exportReport";
 
 import {
   FaBell,
@@ -11,41 +14,140 @@ import {
   FaArrowUp,
 } from "react-icons/fa";
 
-const reports = [
-  {
-    id: "#REP001",
-    title: "Monthly Sales Report",
-    category: "Sales",
-    date: "29 May 2026",
-    status: "Completed",
-  },
-
-  {
-    id: "#REP002",
-    title: "Inventory Analytics",
-    category: "Inventory",
-    date: "28 May 2026",
-    status: "Pending",
-  },
-
-  {
-    id: "#REP003",
-    title: "Customer Insights",
-    category: "Customers",
-    date: "27 May 2026",
-    status: "Completed",
-  },
-
-  {
-    id: "#REP004",
-    title: "Revenue Statistics",
-    category: "Finance",
-    date: "26 May 2026",
-    status: "Processing",
-  },
-];
+const today = () => new Date().toLocaleDateString("en-IN");
 
 const Reports = () => {
+  const [reportData, setReportData] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadReports = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        const data = await getReports();
+
+        if (isMounted) {
+          setReportData(data);
+          if (data.errors?.length) {
+            setError(data.errors.join(", "));
+          }
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err?.response?.data?.message || err.message || "Reports backend not responding");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadReports();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const stats = useMemo(() => {
+    return {
+      totalProducts: reportData?.stock?.totalProducts ?? 0,
+      totalLowStock: reportData?.lowStock?.totalLowStock ?? 0,
+      totalPurchases: reportData?.purchases?.totalPurchases ?? 0,
+      totalSuppliers: reportData?.suppliers?.totalSuppliers ?? 0,
+    };
+  }, [reportData]);
+
+  const recentReports = useMemo(() => {
+    return [
+      {
+        id: "#STOCK",
+        title: "Stock Report",
+        category: "Inventory",
+        date: today(),
+        status: "Completed",
+        total: stats.totalProducts,
+        rows: reportData?.stock?.products || [],
+      },
+      {
+        id: "#LOW-STOCK",
+        title: "Low Stock Report",
+        category: "Inventory",
+        date: today(),
+        status: stats.totalLowStock > 0 ? "Pending" : "Completed",
+        total: stats.totalLowStock,
+        rows: reportData?.lowStock?.lowStockProducts || [],
+      },
+      {
+        id: "#PURCHASE",
+        title: "Purchase Report",
+        category: "Purchases",
+        date: today(),
+        status: "Completed",
+        total: stats.totalPurchases,
+        rows: reportData?.purchases?.purchases || [],
+      },
+      {
+        id: "#SUPPLIER",
+        title: "Supplier Report",
+        category: "Suppliers",
+        date: today(),
+        status: "Completed",
+        total: stats.totalSuppliers,
+        rows: reportData?.suppliers?.suppliers || [],
+      },
+    ];
+  }, [reportData, stats]);
+
+  const filteredReports = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+
+    if (!query) return recentReports;
+
+    return recentReports.filter((report) =>
+      [report.id, report.title, report.category, report.status].some((value) =>
+        String(value).toLowerCase().includes(query),
+      ),
+    );
+  }, [recentReports, searchTerm]);
+
+  const chartHeights = useMemo(() => {
+    const values = [
+      stats.totalProducts,
+      stats.totalLowStock,
+      stats.totalPurchases,
+      stats.totalSuppliers,
+    ];
+    const max = Math.max(...values, 1);
+    return values.map((value) => Math.max(40, Math.round((value / max) * 260)));
+  }, [stats]);
+
+  const totalReportRows =
+    stats.totalProducts + stats.totalLowStock + stats.totalPurchases + stats.totalSuppliers;
+
+  const getPercent = (value) =>
+    totalReportRows ? Math.round((value / totalReportRows) * 100) : 0;
+
+  const exportRows = recentReports.map((report) => ({
+    id: report.id,
+    title: report.title,
+    category: report.category,
+    date: report.date,
+    status: report.status,
+    totalRecords: report.total,
+  }));
+
+  const handleExportReports = () => {
+    exportReport(exportRows, "manager-reports.csv");
+  };
+
   return (
     <div className="flex bg-[#f5f7fb] min-h-screen">
 
@@ -70,6 +172,8 @@ const Reports = () => {
             <input
               type="text"
               placeholder="Search reports..."
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
               className="w-full bg-[#f5f7fb] rounded-2xl pl-14 pr-5 py-4 outline-none border border-gray-200 text-lg"
             />
           </div>
@@ -130,13 +234,23 @@ const Reports = () => {
 
             </div>
 
-            <button className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:scale-105 transition-all duration-300 text-white px-8 py-5 rounded-2xl flex items-center gap-4 text-xl font-semibold shadow-xl">
+            <button
+              type="button"
+              onClick={handleExportReports}
+              className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:scale-105 transition-all duration-300 text-white px-8 py-5 rounded-2xl flex items-center gap-4 text-xl font-semibold shadow-xl"
+            >
 
               <FaDownload />
 
               Export Reports
             </button>
           </div>
+
+          {error && (
+            <div className="mb-8 rounded-2xl border border-red-200 bg-red-50 px-6 py-4 text-red-700">
+              {error}
+            </div>
+          )}
 
           {/* STATS */}
 
@@ -155,7 +269,7 @@ const Reports = () => {
                   </p>
 
                   <h1 className="text-5xl font-bold mt-4">
-                    245
+                    {loading ? "..." : totalReportRows}
                   </h1>
 
                   <div className="flex items-center gap-2 mt-4 text-green-600">
@@ -186,11 +300,11 @@ const Reports = () => {
                 <div>
 
                   <p className="text-gray-500 text-xl">
-                    Sales Analytics
+                    Low Stock
                   </p>
 
                   <h1 className="text-5xl font-bold mt-4">
-                    ₹8.5L
+                    {loading ? "..." : stats.totalLowStock}
                   </h1>
 
                   <div className="flex items-center gap-2 mt-4 text-blue-600">
@@ -221,11 +335,11 @@ const Reports = () => {
                 <div>
 
                   <p className="text-gray-500 text-xl">
-                    Customers
+                    Purchases
                   </p>
 
                   <h1 className="text-5xl font-bold mt-4">
-                    2,450
+                    {loading ? "..." : stats.totalPurchases}
                   </h1>
 
                   <div className="flex items-center gap-2 mt-4 text-purple-600">
@@ -256,11 +370,11 @@ const Reports = () => {
                 <div>
 
                   <p className="text-gray-500 text-xl">
-                    Performance
+                    Suppliers
                   </p>
 
                   <h1 className="text-5xl font-bold mt-4">
-                    92%
+                    {loading ? "..." : stats.totalSuppliers}
                   </h1>
 
                   <div className="flex items-center gap-2 mt-4 text-orange-500">
@@ -316,7 +430,7 @@ const Reports = () => {
 
               <div className="h-[280px] flex items-end justify-between gap-4">
 
-                {[100, 180, 140, 240, 190, 280].map((height, index) => (
+                {chartHeights.map((height, index) => (
                   <div
                     key={index}
                     className="flex flex-col items-center w-full"
@@ -328,7 +442,7 @@ const Reports = () => {
                     />
 
                     <p className="mt-4 text-gray-500 font-medium">
-                      {["Jan", "Feb", "Mar", "Apr", "May", "Jun"][index]}
+                      {["Stock", "Low", "PO", "Suppliers"][index]}
                     </p>
                   </div>
                 ))}
@@ -362,7 +476,7 @@ const Reports = () => {
                     <div className="text-center">
 
                       <h1 className="text-5xl font-bold text-[#061539]">
-                        245
+                        {loading ? "..." : totalReportRows}
                       </h1>
 
                       <p className="text-gray-500 mt-2">
@@ -385,13 +499,13 @@ const Reports = () => {
                     <div className="w-5 h-5 rounded-full bg-blue-600" />
 
                     <span className="text-lg">
-                      Sales Reports
+                      Stock Reports
                     </span>
 
                   </div>
 
                   <span className="font-bold">
-                    45%
+                    {getPercent(stats.totalProducts)}%
                   </span>
                 </div>
 
@@ -408,7 +522,7 @@ const Reports = () => {
                   </div>
 
                   <span className="font-bold">
-                    25%
+                    {getPercent(stats.totalLowStock)}%
                   </span>
                 </div>
 
@@ -419,13 +533,13 @@ const Reports = () => {
                     <div className="w-5 h-5 rounded-full bg-purple-500" />
 
                     <span className="text-lg">
-                      Customer Reports
+                      Purchase Reports
                     </span>
 
                   </div>
 
                   <span className="font-bold">
-                    20%
+                    {getPercent(stats.totalPurchases)}%
                   </span>
                 </div>
 
@@ -436,13 +550,13 @@ const Reports = () => {
                     <div className="w-5 h-5 rounded-full bg-orange-500" />
 
                     <span className="text-lg">
-                      Financial Reports
+                      Supplier Reports
                     </span>
 
                   </div>
 
                   <span className="font-bold">
-                    10%
+                    {getPercent(stats.totalSuppliers)}%
                   </span>
                 </div>
               </div>
@@ -503,7 +617,7 @@ const Reports = () => {
 
               <tbody>
 
-                {reports.map((report, index) => (
+                {filteredReports.map((report, index) => (
                   <tr
                     key={index}
                     className="border-t hover:bg-[#f8f9fc] transition-all duration-300"
@@ -547,7 +661,11 @@ const Reports = () => {
 
                     <td className="p-6">
 
-                      <button className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-6 py-3 rounded-xl hover:scale-105 transition-all duration-300">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedReport(report)}
+                        className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-6 py-3 rounded-xl hover:scale-105 transition-all duration-300"
+                      >
 
                         View
                       </button>
@@ -563,7 +681,7 @@ const Reports = () => {
             <div className="flex justify-between items-center p-8 border-t">
 
               <p className="text-gray-500 text-lg">
-                Showing 1 to 4 of 245 reports
+                Showing 1 to {filteredReports.length} of {recentReports.length} reports
               </p>
 
               <div className="flex items-center gap-4">
@@ -585,6 +703,42 @@ const Reports = () => {
           </div>
         </div>
       </div>
+      {selectedReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b px-6 py-5">
+              <div>
+                <h2 className="text-2xl font-bold text-[#061539]">
+                  {selectedReport.title}
+                </h2>
+                <p className="text-gray-500">
+                  {selectedReport.total} records from backend
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedReport(null)}
+                className="rounded-xl bg-gray-100 px-4 py-2 font-semibold text-gray-700"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] overflow-auto p-6">
+              {selectedReport.rows.length === 0 ? (
+                <div className="rounded-xl bg-gray-50 p-6 text-center text-gray-500">
+                  No records available
+                </div>
+              ) : (
+                <pre className="whitespace-pre-wrap rounded-xl bg-[#f5f7fb] p-4 text-sm text-gray-700">
+                  {JSON.stringify(selectedReport.rows.slice(0, 10), null, 2)}
+                </pre>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

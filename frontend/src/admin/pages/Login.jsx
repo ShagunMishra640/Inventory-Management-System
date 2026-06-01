@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaLock, FaMailBulk, FaEye, FaEyeSlash, FaUserShield } from "react-icons/fa";
-import { ENDPOINTS } from "../api/config";
+import { loginUser } from "../../services/authService";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -19,29 +19,26 @@ export default function Login() {
     setMessage("");
 
     try {
-      const res = await fetch(ENDPOINTS.ADMIN_LOGIN, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Login failed");
-      }
+      const data = await loginUser({ email, password });
 
       const authUser = data.admin || data.user || {};
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(authUser));
 
       setSuccess(true);
-      setMessage("Login successful. Redirecting to admin dashboard...");
+      setMessage("Login successful. Redirecting...");
+      const role = (authUser.role || "").toLowerCase();
+      const redirectPath =
+        {
+          admin: "/admin/dashboard",
+          manager: "/manager/dashboard",
+          "inventory-manager": "/manager/dashboard",
+          cashier: "/cashier/dashboard",
+        }[role] || "/cashier/dashboard";
+
 
       setTimeout(() => {
-        navigate("/admin/dashboard");
+        navigate(redirectPath);
       }, 800);
     } catch (err) {
       setSuccess(false);

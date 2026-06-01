@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
+import { getSettings, updateSettings } from "../services/settingsService";
 
 import {
   FaBell,
@@ -21,7 +23,202 @@ import {
   FaClipboardCheck,
 } from "react-icons/fa";
 
+const initialSettings = {
+  companyName: "My Inventory Store",
+  companyEmail: "admin@gmail.com",
+  mobileNumber: "+91 9876543210",
+  role: "Inventory Admin",
+  currency: "INR",
+  language: "English",
+  lowStockLimit: 10,
+  lowStockAlerts: true,
+  autoReports: true,
+  cloudBackup: false,
+  darkMode: true,
+  twoFactorAuth: true,
+};
+
+const translations = {
+  English: {
+    search: "Search settings...",
+    title: "Settings",
+    subtitle: "Manage inventory management system preferences and controls.",
+    save: "Save Changes",
+    saving: "Saving...",
+    loading: "Settings loading...",
+    saved: "Settings saved successfully",
+    loadError: "Settings load failed",
+    saveError: "Settings save failed",
+    accountTitle: "Account Settings",
+    accountSubtitle: "Manage profile and account details",
+    fullName: "Full Name",
+    email: "Email Address",
+    mobile: "Mobile Number",
+    role: "Role",
+    securityTitle: "Security Settings",
+    securitySubtitle: "Protect your inventory management account",
+    currentPassword: "Current Password",
+    newPassword: "New Password",
+    confirmPassword: "Confirm Password",
+    inventoryTitle: "Inventory Controls",
+    inventorySubtitle: "Configure inventory tracking and monitoring",
+    lowStockAlerts: "Low Stock Alerts",
+    lowStockAlertsDesc: "Notify when stock becomes low",
+    lowStockLimit: "Low Stock Limit",
+    autoReports: "Auto Reports",
+    autoReportsDesc: "Generate weekly inventory reports",
+    cloudBackup: "Cloud Backup",
+    cloudBackupDesc: "Backup inventory data automatically",
+    appearanceTitle: "Appearance & Preferences",
+    appearanceSubtitle: "Customize dashboard look and feel",
+    darkMode: "Dark Mode",
+    darkModeDesc: "Enable dark dashboard theme",
+    language: "Language",
+    languageDesc: "Select preferred language",
+    twoFactor: "Two Factor Authentication",
+    twoFactorDesc: "Extra security for admin login",
+    profileRole: "Inventory Management Admin",
+    department: "Department",
+    departmentValue: "Inventory & Sales",
+    systemAccess: "System Access",
+    fullAccess: "Full Access",
+    lastLogin: "Last Login",
+    todayLogin: "Today, 09:45 AM",
+    quickSettings: "Quick Settings",
+    quickDesc: "Quickly manage inventory reports, stock alerts and security settings.",
+    generateReports: "Generate Reports",
+    backupInventory: "Backup Inventory",
+    auditLogs: "Audit Logs",
+    systemStatus: "System Status",
+    systemStatusDesc: "Inventory system health",
+    database: "Database",
+    active: "Active",
+    inventorySync: "Inventory Sync",
+    running: "Running",
+    pending: "Pending",
+  },
+  Marathi: {
+    search: "सेटिंग्ज शोधा...",
+    title: "सेटिंग्ज",
+    subtitle: "इन्व्हेंटरी व्यवस्थापन प्रणालीची प्राधान्ये आणि नियंत्रण व्यवस्थापित करा.",
+    save: "बदल सेव्ह करा",
+    saving: "सेव्ह होत आहे...",
+    loading: "सेटिंग्ज लोड होत आहेत...",
+    saved: "सेटिंग्ज यशस्वीरित्या सेव्ह झाल्या",
+    loadError: "सेटिंग्ज लोड झाल्या नाहीत",
+    saveError: "सेटिंग्ज सेव्ह झाल्या नाहीत",
+    accountTitle: "खाते सेटिंग्ज",
+    accountSubtitle: "प्रोफाइल आणि खाते माहिती व्यवस्थापित करा",
+    fullName: "पूर्ण नाव",
+    email: "ईमेल पत्ता",
+    mobile: "मोबाइल नंबर",
+    role: "भूमिका",
+    securityTitle: "सुरक्षा सेटिंग्ज",
+    securitySubtitle: "तुमचे इन्व्हेंटरी व्यवस्थापन खाते सुरक्षित ठेवा",
+    currentPassword: "सध्याचा पासवर्ड",
+    newPassword: "नवीन पासवर्ड",
+    confirmPassword: "पासवर्ड पुष्टी करा",
+    inventoryTitle: "इन्व्हेंटरी नियंत्रण",
+    inventorySubtitle: "इन्व्हेंटरी ट्रॅकिंग आणि मॉनिटरिंग सेट करा",
+    lowStockAlerts: "कमी स्टॉक सूचना",
+    lowStockAlertsDesc: "स्टॉक कमी झाल्यावर सूचना द्या",
+    lowStockLimit: "कमी स्टॉक मर्यादा",
+    autoReports: "ऑटो रिपोर्ट्स",
+    autoReportsDesc: "साप्ताहिक इन्व्हेंटरी रिपोर्ट तयार करा",
+    cloudBackup: "क्लाउड बॅकअप",
+    cloudBackupDesc: "इन्व्हेंटरी डेटा आपोआप बॅकअप करा",
+    appearanceTitle: "दिसणे आणि प्राधान्ये",
+    appearanceSubtitle: "डॅशबोर्डचा लुक आणि फील बदला",
+    darkMode: "डार्क मोड",
+    darkModeDesc: "डार्क डॅशबोर्ड थीम सुरू करा",
+    language: "भाषा",
+    languageDesc: "पसंतीची भाषा निवडा",
+    twoFactor: "दोन-घटक प्रमाणीकरण",
+    twoFactorDesc: "अॅडमिन लॉगिनसाठी अतिरिक्त सुरक्षा",
+    profileRole: "इन्व्हेंटरी व्यवस्थापन अॅडमिन",
+    department: "विभाग",
+    departmentValue: "इन्व्हेंटरी आणि विक्री",
+    systemAccess: "सिस्टम प्रवेश",
+    fullAccess: "पूर्ण प्रवेश",
+    lastLogin: "शेवटचा लॉगिन",
+    todayLogin: "आज, 09:45 AM",
+    quickSettings: "जलद सेटिंग्ज",
+    quickDesc: "इन्व्हेंटरी रिपोर्ट्स, स्टॉक सूचना आणि सुरक्षा सेटिंग्ज जलद व्यवस्थापित करा.",
+    generateReports: "रिपोर्ट तयार करा",
+    backupInventory: "इन्व्हेंटरी बॅकअप",
+    auditLogs: "ऑडिट लॉग्स",
+    systemStatus: "सिस्टम स्थिती",
+    systemStatusDesc: "इन्व्हेंटरी सिस्टम आरोग्य",
+    database: "डेटाबेस",
+    active: "सक्रिय",
+    inventorySync: "इन्व्हेंटरी सिंक",
+    running: "चालू आहे",
+    pending: "प्रलंबित",
+  },
+};
+
 const Settings = () => {
+  const [settings, setSettings] = useState(initialSettings);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        setIsLoading(true);
+        setError("");
+        const data = await getSettings();
+        setSettings((current) => ({ ...current, ...data }));
+      } catch (err) {
+        setError(err?.response?.data?.message || err.message || translations.English.loadError);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSettings();
+  }, []);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setSettings((current) => ({
+      ...current,
+      [name]: name === "lowStockLimit" ? Number(value) : value,
+    }));
+  };
+
+  const toggleSetting = (name) => {
+    setSettings((current) => ({
+      ...current,
+      [name]: !current[name],
+    }));
+  };
+
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      setError("");
+      setMessage("");
+      const savedSettings = await updateSettings(settings);
+      setSettings((current) => ({ ...current, ...savedSettings }));
+      setMessage((translations[savedSettings.language] || translations.English).saved);
+    } catch (err) {
+      setError(err?.response?.data?.message || err.message || text.saveError);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const ToggleIcon = ({ enabled }) =>
+    enabled ? (
+      <FaToggleOn className="text-5xl text-blue-600" />
+    ) : (
+      <FaToggleOff className="text-5xl text-gray-400" />
+    );
+  const text = translations[settings.language] || translations.English;
+
   return (
     <div className="flex bg-[#f4f7fe] min-h-screen">
 
@@ -45,7 +242,7 @@ const Settings = () => {
 
             <input
               type="text"
-              placeholder="Search settings..."
+              placeholder={text.search}
               className="w-full bg-[#f4f7fe] border border-gray-200 rounded-2xl pl-14 pr-5 py-4 outline-none text-lg"
             />
           </div>
@@ -82,7 +279,7 @@ const Settings = () => {
                 </h2>
 
                 <p className="text-gray-500">
-                  Inventory Manager
+                  {settings.role}
                 </p>
 
               </div>
@@ -101,22 +298,45 @@ const Settings = () => {
             <div>
 
               <h1 className="text-6xl font-bold text-[#061539]">
-                Settings
+                {text.title}
               </h1>
 
               <p className="text-gray-500 text-xl mt-3">
-                Manage inventory management system preferences and controls.
+                {text.subtitle}
               </p>
 
             </div>
 
-            <button className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-8 py-5 rounded-2xl text-xl font-semibold flex items-center gap-4 shadow-xl hover:scale-105 transition-all duration-300">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving}
+              className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-8 py-5 rounded-2xl text-xl font-semibold flex items-center gap-4 shadow-xl hover:scale-105 transition-all duration-300 disabled:opacity-60"
+            >
 
               <FaSave />
 
-              Save Changes
+              {isSaving ? text.saving : text.save}
             </button>
           </div>
+
+          {isLoading && (
+            <div className="mb-6 rounded-2xl border border-blue-200 bg-blue-50 px-6 py-4 text-blue-700">
+              {text.loading}
+            </div>
+          )}
+
+          {message && (
+            <div className="mb-6 rounded-2xl border border-green-200 bg-green-50 px-6 py-4 text-green-700">
+              {message}
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-6 py-4 text-red-700">
+              {error}
+            </div>
+          )}
 
           {/* GRID */}
 
@@ -141,11 +361,11 @@ const Settings = () => {
                   <div>
 
                     <h2 className="text-3xl font-bold text-[#061539]">
-                      Account Settings
+                      {text.accountTitle}
                     </h2>
 
                     <p className="text-gray-500 mt-2">
-                      Manage profile and account details
+                      {text.accountSubtitle}
                     </p>
 
                   </div>
@@ -158,12 +378,14 @@ const Settings = () => {
                   <div>
 
                     <label className="block font-semibold mb-3 text-lg">
-                      Full Name
+                      {text.fullName}
                     </label>
 
                     <input
                       type="text"
-                      value="Rutika Pujari"
+                      name="companyName"
+                      value={settings.companyName}
+                      onChange={handleChange}
                       className="w-full bg-[#f4f7fe] border border-gray-200 rounded-2xl px-5 py-4 outline-none"
                     />
                   </div>
@@ -171,12 +393,14 @@ const Settings = () => {
                   <div>
 
                     <label className="block font-semibold mb-3 text-lg">
-                      Email Address
+                      {text.email}
                     </label>
 
                     <input
                       type="email"
-                      value="rpujari5000@gmail.com"
+                      name="companyEmail"
+                      value={settings.companyEmail}
+                      onChange={handleChange}
                       className="w-full bg-[#f4f7fe] border border-gray-200 rounded-2xl px-5 py-4 outline-none"
                     />
                   </div>
@@ -184,12 +408,14 @@ const Settings = () => {
                   <div>
 
                     <label className="block font-semibold mb-3 text-lg">
-                      Mobile Number
+                      {text.mobile}
                     </label>
 
                     <input
                       type="text"
-                      value="+91 9876543210"
+                      name="mobileNumber"
+                      value={settings.mobileNumber}
+                      onChange={handleChange}
                       className="w-full bg-[#f4f7fe] border border-gray-200 rounded-2xl px-5 py-4 outline-none"
                     />
                   </div>
@@ -197,12 +423,14 @@ const Settings = () => {
                   <div>
 
                     <label className="block font-semibold mb-3 text-lg">
-                      Role
+                      {text.role}
                     </label>
 
                     <input
                       type="text"
-                      value="Inventory Admin"
+                      name="role"
+                      value={settings.role}
+                      onChange={handleChange}
                       className="w-full bg-[#f4f7fe] border border-gray-200 rounded-2xl px-5 py-4 outline-none"
                     />
                   </div>
@@ -224,11 +452,11 @@ const Settings = () => {
                   <div>
 
                     <h2 className="text-3xl font-bold text-[#061539]">
-                      Security Settings
+                      {text.securityTitle}
                     </h2>
 
                     <p className="text-gray-500 mt-2">
-                      Protect your inventory management account
+                      {text.securitySubtitle}
                     </p>
 
                   </div>
@@ -238,19 +466,19 @@ const Settings = () => {
 
                   <input
                     type="password"
-                    placeholder="Current Password"
+                    placeholder={text.currentPassword}
                     className="w-full bg-[#f4f7fe] border border-gray-200 rounded-2xl px-5 py-4 outline-none"
                   />
 
                   <input
                     type="password"
-                    placeholder="New Password"
+                    placeholder={text.newPassword}
                     className="w-full bg-[#f4f7fe] border border-gray-200 rounded-2xl px-5 py-4 outline-none"
                   />
 
                   <input
                     type="password"
-                    placeholder="Confirm Password"
+                    placeholder={text.confirmPassword}
                     className="w-full bg-[#f4f7fe] border border-gray-200 rounded-2xl px-5 py-4 outline-none"
                   />
 
@@ -272,11 +500,11 @@ const Settings = () => {
                   <div>
 
                     <h2 className="text-3xl font-bold text-[#061539]">
-                      Inventory Controls
+                      {text.inventoryTitle}
                     </h2>
 
                     <p className="text-gray-500 mt-2">
-                      Configure inventory tracking and monitoring
+                      {text.inventorySubtitle}
                     </p>
 
                   </div>
@@ -295,17 +523,37 @@ const Settings = () => {
                       <div>
 
                         <h3 className="font-bold text-lg">
-                          Low Stock Alerts
+                          {text.lowStockAlerts}
                         </h3>
 
                         <p className="text-gray-500">
-                          Notify when stock becomes low
+                          {text.lowStockAlertsDesc}
                         </p>
 
                       </div>
                     </div>
 
-                    <FaToggleOn className="text-5xl text-blue-600" />
+                    <button
+                      type="button"
+                      onClick={() => toggleSetting("lowStockAlerts")}
+                      aria-label="Toggle low stock alerts"
+                    >
+                      <ToggleIcon enabled={settings.lowStockAlerts} />
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold mb-3 text-lg">
+                      {text.lowStockLimit}
+                    </label>
+                    <input
+                      type="number"
+                      name="lowStockLimit"
+                      min="0"
+                      value={settings.lowStockLimit}
+                      onChange={handleChange}
+                      className="w-full bg-[#f4f7fe] border border-gray-200 rounded-2xl px-5 py-4 outline-none"
+                    />
                   </div>
 
                   {/* REPORTS */}
@@ -319,17 +567,23 @@ const Settings = () => {
                       <div>
 
                         <h3 className="font-bold text-lg">
-                          Auto Reports
+                          {text.autoReports}
                         </h3>
 
                         <p className="text-gray-500">
-                          Generate weekly inventory reports
+                          {text.autoReportsDesc}
                         </p>
 
                       </div>
                     </div>
 
-                    <FaToggleOn className="text-5xl text-green-600" />
+                    <button
+                      type="button"
+                      onClick={() => toggleSetting("autoReports")}
+                      aria-label="Toggle auto reports"
+                    >
+                      <ToggleIcon enabled={settings.autoReports} />
+                    </button>
                   </div>
 
                   {/* BACKUP */}
@@ -343,17 +597,23 @@ const Settings = () => {
                       <div>
 
                         <h3 className="font-bold text-lg">
-                          Cloud Backup
+                          {text.cloudBackup}
                         </h3>
 
                         <p className="text-gray-500">
-                          Backup inventory data automatically
+                          {text.cloudBackupDesc}
                         </p>
 
                       </div>
                     </div>
 
-                    <FaToggleOff className="text-5xl text-gray-400" />
+                    <button
+                      type="button"
+                      onClick={() => toggleSetting("cloudBackup")}
+                      aria-label="Toggle cloud backup"
+                    >
+                      <ToggleIcon enabled={settings.cloudBackup} />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -373,11 +633,11 @@ const Settings = () => {
                   <div>
 
                     <h2 className="text-3xl font-bold text-[#061539]">
-                      Appearance & Preferences
+                      {text.appearanceTitle}
                     </h2>
 
                     <p className="text-gray-500 mt-2">
-                      Customize dashboard look and feel
+                      {text.appearanceSubtitle}
                     </p>
 
                   </div>
@@ -396,17 +656,23 @@ const Settings = () => {
                       <div>
 
                         <h3 className="font-bold text-lg">
-                          Dark Mode
+                          {text.darkMode}
                         </h3>
 
                         <p className="text-gray-500">
-                          Enable dark dashboard theme
+                          {text.darkModeDesc}
                         </p>
 
                       </div>
                     </div>
 
-                    <FaToggleOn className="text-5xl text-indigo-600" />
+                    <button
+                      type="button"
+                      onClick={() => toggleSetting("darkMode")}
+                      aria-label="Toggle dark mode"
+                    >
+                      <ToggleIcon enabled={settings.darkMode} />
+                    </button>
                   </div>
 
                   {/* LANGUAGE */}
@@ -420,20 +686,25 @@ const Settings = () => {
                       <div>
 
                         <h3 className="font-bold text-lg">
-                          Language
+                          {text.language}
                         </h3>
 
                         <p className="text-gray-500">
-                          Select preferred language
+                          {text.languageDesc}
                         </p>
 
                       </div>
                     </div>
 
-                    <select className="bg-white border border-gray-200 rounded-xl px-5 py-3 outline-none">
+                    <select
+                      name="language"
+                      value={settings.language}
+                      onChange={handleChange}
+                      className="bg-white border border-gray-200 rounded-xl px-5 py-3 outline-none"
+                    >
 
-                      <option>English</option>
-                      <option>Marathi</option>
+                      <option value="English">English</option>
+                      <option value="Marathi">मराठी</option>
 
                     </select>
                   </div>
@@ -449,17 +720,23 @@ const Settings = () => {
                       <div>
 
                         <h3 className="font-bold text-lg">
-                          Two Factor Authentication
+                          {text.twoFactor}
                         </h3>
 
                         <p className="text-gray-500">
-                          Extra security for admin login
+                          {text.twoFactorDesc}
                         </p>
 
                       </div>
                     </div>
 
-                    <FaToggleOn className="text-5xl text-red-600" />
+                    <button
+                      type="button"
+                      onClick={() => toggleSetting("twoFactorAuth")}
+                      aria-label="Toggle two factor authentication"
+                    >
+                      <ToggleIcon enabled={settings.twoFactorAuth} />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -493,7 +770,7 @@ const Settings = () => {
                 </h2>
 
                 <p className="text-gray-500 mt-2">
-                  Inventory Management Admin
+                  {text.profileRole}
                 </p>
 
                 <div className="mt-8 space-y-4 text-left">
@@ -501,33 +778,33 @@ const Settings = () => {
                   <div className="bg-[#f4f7fe] rounded-2xl p-4">
 
                     <p className="text-gray-500">
-                      Department
+                      {text.department}
                     </p>
 
                     <h3 className="font-semibold mt-1">
-                      Inventory & Sales
+                      {text.departmentValue}
                     </h3>
                   </div>
 
                   <div className="bg-[#f4f7fe] rounded-2xl p-4">
 
                     <p className="text-gray-500">
-                      System Access
+                      {text.systemAccess}
                     </p>
 
                     <h3 className="font-semibold mt-1 text-green-600">
-                      Full Access
+                      {text.fullAccess}
                     </h3>
                   </div>
 
                   <div className="bg-[#f4f7fe] rounded-2xl p-4">
 
                     <p className="text-gray-500">
-                      Last Login
+                      {text.lastLogin}
                     </p>
 
                     <h3 className="font-semibold mt-1">
-                      Today, 09:45 AM
+                      {text.todayLogin}
                     </h3>
                   </div>
                 </div>
@@ -538,28 +815,28 @@ const Settings = () => {
               <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 text-white shadow-xl">
 
                 <h2 className="text-3xl font-bold">
-                  Quick Settings
+                  {text.quickSettings}
                 </h2>
 
                 <p className="mt-4 text-blue-100 leading-relaxed">
-                  Quickly manage inventory reports, stock alerts and security settings.
+                  {text.quickDesc}
                 </p>
 
                 <div className="mt-8 space-y-4">
 
                   <button className="w-full bg-white text-blue-700 py-4 rounded-2xl font-bold hover:scale-105 transition-all duration-300">
 
-                    Generate Reports
+                    {text.generateReports}
                   </button>
 
                   <button className="w-full bg-white/20 border border-white/20 py-4 rounded-2xl font-bold hover:bg-white/30 transition-all duration-300">
 
-                    Backup Inventory
+                    {text.backupInventory}
                   </button>
 
                   <button className="w-full bg-white/20 border border-white/20 py-4 rounded-2xl font-bold hover:bg-white/30 transition-all duration-300">
 
-                    Audit Logs
+                    {text.auditLogs}
                   </button>
                 </div>
               </div>
@@ -579,11 +856,11 @@ const Settings = () => {
                   <div>
 
                     <h2 className="text-2xl font-bold text-[#061539]">
-                      System Status
+                      {text.systemStatus}
                     </h2>
 
                     <p className="text-gray-500">
-                      Inventory system health
+                      {text.systemStatusDesc}
                     </p>
 
                   </div>
@@ -594,33 +871,33 @@ const Settings = () => {
                   <div className="flex justify-between items-center">
 
                     <span className="font-semibold">
-                      Database
+                      {text.database}
                     </span>
 
                     <span className="text-green-600 font-bold">
-                      Active
+                      {text.active}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center">
 
                     <span className="font-semibold">
-                      Inventory Sync
+                      {text.inventorySync}
                     </span>
 
                     <span className="text-green-600 font-bold">
-                      Running
+                      {text.running}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center">
 
                     <span className="font-semibold">
-                      Cloud Backup
+                      {text.cloudBackup}
                     </span>
 
                     <span className="text-yellow-500 font-bold">
-                      Pending
+                      {text.pending}
                     </span>
                   </div>
 

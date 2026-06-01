@@ -27,6 +27,36 @@ const userSchema = new mongoose.Schema(
 
       default: "cashier",
     },
+
+    phone: {
+      type: String,
+      default: "",
+    },
+
+    location: {
+      type: String,
+      default: "",
+    },
+
+    title: {
+      type: String,
+      default: "",
+    },
+
+    bio: {
+      type: String,
+      default: "",
+    },
+
+    skills: {
+      type: [String],
+      default: [],
+    },
+
+    avatar: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,

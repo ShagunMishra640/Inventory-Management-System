@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
+import { getProfile, updateProfile } from "../services/profileService";
 
 import {
   FaBell,
@@ -48,7 +50,114 @@ const activities = [
   },
 ];
 
+const fallbackProfile = {
+  name: "Rutika Pujari",
+  email: "rpujari5000@gmail.com",
+  phone: "+91 9876543210",
+  location: "Solapur, Maharashtra",
+  title: "Inventory Management Admin",
+  role: "inventory-manager",
+  bio: "Experienced inventory management administrator specializing in stock tracking, warehouse optimization, sales analytics and order management. Skilled in React JS, Tailwind CSS and MERN stack technologies for creating modern dashboard systems.",
+  skills: ["React JS", "Tailwind CSS"],
+  avatar: "/Rutika.jpg.jpeg",
+};
+
+const roleLabel = {
+  admin: "Admin",
+  cashier: "Cashier",
+  "inventory-manager": "Inventory Manager",
+};
+
 const Profile = () => {
+  const [profile, setProfile] = useState(fallbackProfile);
+  const [formData, setFormData] = useState(fallbackProfile);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        setIsLoading(true);
+        setError("");
+        const user = await getProfile();
+        const mergedProfile = {
+          ...fallbackProfile,
+          ...user,
+          title: user.title || roleLabel[user.role] || fallbackProfile.title,
+          skills: user.skills?.length ? user.skills : fallbackProfile.skills,
+          avatar: user.avatar || fallbackProfile.avatar,
+        };
+        setProfile(mergedProfile);
+        setFormData(mergedProfile);
+        localStorage.setItem("user", JSON.stringify(user));
+      } catch (err) {
+        const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+        if (storedUser) {
+          const mergedProfile = {
+            ...fallbackProfile,
+            ...storedUser,
+            title: storedUser.title || roleLabel[storedUser.role] || fallbackProfile.title,
+          };
+          setProfile(mergedProfile);
+          setFormData(mergedProfile);
+        }
+        setError(err?.response?.data?.message || err.message || "Profile load failed");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, []);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((current) => ({
+      ...current,
+      [name]: name === "skills" ? value.split(",").map((skill) => skill.trim()).filter(Boolean) : value,
+    }));
+  };
+
+  const openEditModal = () => {
+    setFormData(profile);
+    setIsEditing(true);
+  };
+
+  const closeEditModal = () => {
+    if (isSaving) return;
+    setIsEditing(false);
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    try {
+      setIsSaving(true);
+      setError("");
+      setMessage("");
+      const updatedUser = await updateProfile(formData);
+      const updatedProfile = {
+        ...profile,
+        ...updatedUser,
+        title: updatedUser.title || roleLabel[updatedUser.role] || profile.title,
+        skills: updatedUser.skills?.length ? updatedUser.skills : profile.skills,
+        avatar: updatedUser.avatar || profile.avatar,
+      };
+      setProfile(updatedProfile);
+      setFormData(updatedProfile);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setMessage("Profile updated successfully");
+      setIsEditing(false);
+    } catch (err) {
+      setError(err?.response?.data?.message || err.message || "Profile update failed");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="flex bg-[#f4f7fe] min-h-screen">
 
@@ -105,11 +214,11 @@ const Profile = () => {
               <div>
 
                 <h2 className="font-bold text-xl">
-                  Rutika Pujari
+                  {profile.name}
                 </h2>
 
                 <p className="text-gray-500">
-                  Inventory Manager
+                  {profile.title || roleLabel[profile.role] || "Inventory Manager"}
                 </p>
 
               </div>
@@ -137,13 +246,35 @@ const Profile = () => {
 
             </div>
 
-            <button className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-8 py-5 rounded-2xl text-xl font-semibold flex items-center gap-4 shadow-xl hover:scale-105 transition-all duration-300">
+            <button
+              type="button"
+              onClick={openEditModal}
+              className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-8 py-5 rounded-2xl text-xl font-semibold flex items-center gap-4 shadow-xl hover:scale-105 transition-all duration-300"
+            >
 
               <FaEdit />
 
               Edit Profile
             </button>
           </div>
+
+          {isLoading && (
+            <div className="mb-6 rounded-2xl border border-blue-200 bg-blue-50 px-6 py-4 text-blue-700">
+              Profile loading...
+            </div>
+          )}
+
+          {message && (
+            <div className="mb-6 rounded-2xl border border-green-200 bg-green-50 px-6 py-4 text-green-700">
+              {message}
+            </div>
+          )}
+
+          {error && (
+            <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-6 py-4 text-red-700">
+              {error}
+            </div>
+          )}
 
           {/* GRID */}
 
@@ -160,8 +291,8 @@ const Profile = () => {
                 <div className="relative w-fit mx-auto">
 
                   <img
-                    src="/Rutika.jpg.jpeg"
-                    alt=""
+                    src={profile.avatar || "/Rutika.jpg.jpeg"}
+                    alt={profile.name}
                     className="w-44 h-44 rounded-full object-cover border-4 border-blue-100"
                   />
 
@@ -173,22 +304,27 @@ const Profile = () => {
                 </div>
 
                 <h2 className="text-4xl font-bold mt-6 text-[#061539]">
-                  Rutika Pujari
+                  {profile.name}
                 </h2>
 
                 <p className="text-blue-600 text-xl font-semibold mt-2">
-                  Inventory Management Admin
+                  {profile.title || roleLabel[profile.role] || "Inventory Management Admin"}
                 </p>
 
                 <div className="flex justify-center gap-4 mt-6">
 
-                  <span className="bg-blue-100 text-blue-700 px-5 py-2 rounded-xl font-semibold">
-                    React JS
-                  </span>
-
-                  <span className="bg-purple-100 text-purple-700 px-5 py-2 rounded-xl font-semibold">
-                    Tailwind
-                  </span>
+                  {profile.skills.slice(0, 2).map((skill, index) => (
+                    <span
+                      key={skill}
+                      className={`px-5 py-2 rounded-xl font-semibold ${
+                        index === 0
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-purple-100 text-purple-700"
+                      }`}
+                    >
+                      {skill}
+                    </span>
+                  ))}
 
                 </div>
 
@@ -207,7 +343,7 @@ const Profile = () => {
                       </p>
 
                       <h3 className="font-semibold">
-                        rpujari5000@gmail.com
+                        {profile.email}
                       </h3>
 
                     </div>
@@ -224,7 +360,7 @@ const Profile = () => {
                       </p>
 
                       <h3 className="font-semibold">
-                        +91 9876543210
+                        {profile.phone || "-"}
                       </h3>
 
                     </div>
@@ -241,7 +377,7 @@ const Profile = () => {
                       </p>
 
                       <h3 className="font-semibold">
-                        Solapur, Maharashtra
+                        {profile.location || "-"}
                       </h3>
 
                     </div>
@@ -326,10 +462,7 @@ const Profile = () => {
                 </div>
 
                 <p className="text-gray-600 text-lg leading-relaxed mt-8">
-                  Experienced inventory management administrator specializing in
-                  stock tracking, warehouse optimization, sales analytics and
-                  order management. Skilled in React JS, Tailwind CSS and MERN
-                  stack technologies for creating modern dashboard systems.
+                  {profile.bio}
                 </p>
               </div>
 
@@ -531,12 +664,10 @@ const Profile = () => {
 
                     <div className="space-y-5">
 
-                      {[
-                        "React JS",
-                        "Tailwind CSS",
-                        "Inventory Management",
-                        "Sales Analytics",
-                      ].map((skill, index) => (
+                      {(profile.skills.length
+                        ? profile.skills
+                        : ["React JS", "Tailwind CSS", "Inventory Management", "Sales Analytics"]
+                      ).map((skill, index) => (
                         <div key={index}>
 
                           <div className="flex justify-between mb-2">
@@ -576,6 +707,126 @@ const Profile = () => {
           </div>
         </div>
       </div>
+      {isEditing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-2xl rounded-2xl bg-white shadow-xl">
+            <div className="border-b px-6 py-5">
+              <h2 className="text-2xl font-bold text-[#061539]">
+                Edit Profile
+              </h2>
+            </div>
+
+            <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-5 p-6">
+              <div>
+                <label className="mb-2 block font-semibold text-gray-700">
+                  Full Name
+                </label>
+                <input
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border bg-[#f4f7fe] px-4 py-3 outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block font-semibold text-gray-700">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border bg-[#f4f7fe] px-4 py-3 outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block font-semibold text-gray-700">
+                  Phone
+                </label>
+                <input
+                  name="phone"
+                  value={formData.phone || ""}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border bg-[#f4f7fe] px-4 py-3 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block font-semibold text-gray-700">
+                  Location
+                </label>
+                <input
+                  name="location"
+                  value={formData.location || ""}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border bg-[#f4f7fe] px-4 py-3 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block font-semibold text-gray-700">
+                  Title
+                </label>
+                <input
+                  name="title"
+                  value={formData.title || ""}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border bg-[#f4f7fe] px-4 py-3 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block font-semibold text-gray-700">
+                  Skills
+                </label>
+                <input
+                  name="skills"
+                  value={(formData.skills || []).join(", ")}
+                  onChange={handleChange}
+                  placeholder="React JS, Tailwind CSS"
+                  className="w-full rounded-xl border bg-[#f4f7fe] px-4 py-3 outline-none"
+                />
+              </div>
+
+              <div className="col-span-2">
+                <label className="mb-2 block font-semibold text-gray-700">
+                  Bio
+                </label>
+                <textarea
+                  name="bio"
+                  value={formData.bio || ""}
+                  onChange={handleChange}
+                  rows="4"
+                  className="w-full rounded-xl border bg-[#f4f7fe] px-4 py-3 outline-none"
+                />
+              </div>
+
+              <div className="col-span-2 flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  className="rounded-xl bg-gray-100 px-5 py-3 font-semibold text-gray-700"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white disabled:opacity-60"
+                >
+                  {isSaving ? "Saving..." : "Save Profile"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

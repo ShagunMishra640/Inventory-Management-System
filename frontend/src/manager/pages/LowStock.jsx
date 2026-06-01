@@ -1,4 +1,6 @@
+import { useEffect, useMemo, useState } from "react";
 import Sidebar from "../components/Sidebar";
+import { getLowStockProducts, getStockReport } from "../services/stockService";
 import {
   FaBell,
   FaSearch,
@@ -10,7 +12,7 @@ import {
   FaRedo,
 } from "react-icons/fa";
 
-const lowStockProducts = [
+const fallbackLowStockProducts = [
   {
     id: "PRD001",
     product: "Gaming Keyboard",
@@ -50,6 +52,85 @@ const lowStockProducts = [
 ];
 
 const LowStock = () => {
+  const [products, setProducts] = useState(fallbackLowStockProducts);
+  const [totalProducts, setTotalProducts] = useState(fallbackLowStockProducts.length);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadLowStock = async () => {
+      try {
+        setIsLoading(true);
+        setError("");
+        const [lowStockProducts, stockReport] = await Promise.all([
+          getLowStockProducts(),
+          getStockReport(),
+        ]);
+
+        if (isMounted) {
+          setProducts(lowStockProducts);
+          setTotalProducts(stockReport?.totalProducts || lowStockProducts.length);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err?.response?.data?.message || err.message || "Low stock data load nahi hua");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadLowStock();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const lowStockRows = useMemo(
+    () =>
+      products.map((product, index) => {
+        const stock = Number(product.stock ?? product.quantity ?? 0);
+        const minimum = Number(product.reorderLevel ?? product.minStock ?? 10);
+
+        return {
+          id: product.sku || product.id || `PRD${String(index + 1).padStart(3, "0")}`,
+          product: product.name || product.product || "Unknown Product",
+          category: product.category || "Uncategorized",
+          stock,
+          minimum,
+          supplier: product.supplier?.name || product.supplier || "Not assigned",
+          status: stock <= Math.max(1, Math.floor(minimum / 2)) ? "Critical" : "Low",
+        };
+      }),
+    [products],
+  );
+
+  const filteredRows = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+
+    if (!query) {
+      return lowStockRows;
+    }
+
+    return lowStockRows.filter((item) =>
+      [item.id, item.product, item.category, item.supplier].some((value) =>
+        String(value).toLowerCase().includes(query),
+      ),
+    );
+  }, [lowStockRows, searchTerm]);
+
+  const criticalCount = lowStockRows.filter((item) => item.status === "Critical").length;
+  const healthyCount = Math.max(totalProducts - lowStockRows.length, 0);
+  const healthyPercent = totalProducts ? Math.round((healthyCount / totalProducts) * 100) : 0;
+  const lowPercent = totalProducts ? Math.round((lowStockRows.length / totalProducts) * 100) : 0;
+  const criticalPercent = totalProducts ? Math.round((criticalCount / totalProducts) * 100) : 0;
+
   return (
     <div className="flex bg-[#f4f7fe] min-h-screen">
       <Sidebar />
@@ -75,7 +156,7 @@ const LowStock = () => {
             <div className="relative">
               <FaBell className="text-3xl text-red-500" />
               <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs h-6 w-6 rounded-full flex items-center justify-center">
-                18
+                {lowStockRows.length}
               </span>
             </div>
 
@@ -97,7 +178,9 @@ const LowStock = () => {
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-gray-500">Low Stock Items</p>
-                  <h2 className="text-4xl font-bold mt-2">18</h2>
+                  <h2 className="text-4xl font-bold mt-2">
+                    {isLoading ? "..." : lowStockRows.length}
+                  </h2>
                 </div>
 
                 <FaBoxOpen className="text-5xl text-orange-500" />
@@ -108,7 +191,9 @@ const LowStock = () => {
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-gray-500">Critical Alerts</p>
-                  <h2 className="text-4xl font-bold mt-2">7</h2>
+                  <h2 className="text-4xl font-bold mt-2">
+                    {isLoading ? "..." : criticalCount}
+                  </h2>
                 </div>
 
                 <FaExclamationTriangle className="text-5xl text-red-500" />
@@ -119,7 +204,9 @@ const LowStock = () => {
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-gray-500">Need Reorder</p>
-                  <h2 className="text-4xl font-bold mt-2">12</h2>
+                  <h2 className="text-4xl font-bold mt-2">
+                    {isLoading ? "..." : lowStockRows.length}
+                  </h2>
                 </div>
 
                 <FaShoppingCart className="text-5xl text-blue-600" />
@@ -130,7 +217,9 @@ const LowStock = () => {
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-gray-500">Warehouses</p>
-                  <h2 className="text-4xl font-bold mt-2">4</h2>
+                  <h2 className="text-4xl font-bold mt-2">
+                    {isLoading ? "..." : totalProducts}
+                  </h2>
                 </div>
 
                 <FaWarehouse className="text-5xl text-green-600" />
@@ -149,6 +238,8 @@ const LowStock = () => {
               <input
                 type="text"
                 placeholder="Search low stock product..."
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
                 className="w-full bg-[#f4f7fe] border rounded-xl py-3 pl-12 pr-4 outline-none"
               />
             </div>
@@ -195,7 +286,31 @@ const LowStock = () => {
 
               <tbody>
 
-                {lowStockProducts.map((item) => (
+                {isLoading && (
+                  <tr>
+                    <td className="p-8 text-center text-gray-500" colSpan="8">
+                      Low stock loading...
+                    </td>
+                  </tr>
+                )}
+
+                {!isLoading && error && (
+                  <tr>
+                    <td className="p-8 text-center text-red-600" colSpan="8">
+                      {error}
+                    </td>
+                  </tr>
+                )}
+
+                {!isLoading && !error && filteredRows.length === 0 && (
+                  <tr>
+                    <td className="p-8 text-center text-gray-500" colSpan="8">
+                      Low stock products available nahi hai
+                    </td>
+                  </tr>
+                )}
+
+                {!isLoading && !error && filteredRows.map((item) => (
                   <tr key={item.id} className="border-b">
 
                     <td className="p-5">{item.id}</td>
@@ -252,33 +367,42 @@ const LowStock = () => {
                 <div>
                   <div className="flex justify-between mb-2">
                     <span>Healthy Stock</span>
-                    <span>82%</span>
+                    <span>{healthyPercent}%</span>
                   </div>
 
                   <div className="bg-gray-200 h-3 rounded-full">
-                    <div className="bg-green-500 h-3 rounded-full w-[82%]"></div>
+                    <div
+                      className="bg-green-500 h-3 rounded-full"
+                      style={{ width: `${healthyPercent}%` }}
+                    ></div>
                   </div>
                 </div>
 
                 <div>
                   <div className="flex justify-between mb-2">
                     <span>Low Stock</span>
-                    <span>13%</span>
+                    <span>{lowPercent}%</span>
                   </div>
 
                   <div className="bg-gray-200 h-3 rounded-full">
-                    <div className="bg-orange-500 h-3 rounded-full w-[13%]"></div>
+                    <div
+                      className="bg-orange-500 h-3 rounded-full"
+                      style={{ width: `${lowPercent}%` }}
+                    ></div>
                   </div>
                 </div>
 
                 <div>
                   <div className="flex justify-between mb-2">
                     <span>Critical</span>
-                    <span>5%</span>
+                    <span>{criticalPercent}%</span>
                   </div>
 
                   <div className="bg-gray-200 h-3 rounded-full">
-                    <div className="bg-red-500 h-3 rounded-full w-[5%]"></div>
+                    <div
+                      className="bg-red-500 h-3 rounded-full"
+                      style={{ width: `${criticalPercent}%` }}
+                    ></div>
                   </div>
                 </div>
 
@@ -295,21 +419,20 @@ const LowStock = () => {
 
               <div className="space-y-4">
 
-                <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl">
-                  Office Chair stock dropped below minimum level.
-                </div>
+                {lowStockRows.slice(0, 4).map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-xl"
+                  >
+                    {item.product} requires reorder soon.
+                  </div>
+                ))}
 
-                <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-xl">
-                  Wireless Mouse requires reorder soon.
-                </div>
-
-                <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-xl">
-                  Gaming Keyboard stock reaching critical level.
-                </div>
-
-                <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-xl">
-                  Inventory audit completed successfully.
-                </div>
+                {lowStockRows.length === 0 && (
+                  <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-xl">
+                    All products are above low stock level.
+                  </div>
+                )}
 
               </div>
 

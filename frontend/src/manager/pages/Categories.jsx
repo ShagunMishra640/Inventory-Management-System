@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Sidebar from "../components/Sidebar";
+import CategoryCard from "../components/CategoryCard";
 import {
   createCategory,
   deleteCategory,
@@ -10,8 +11,6 @@ import {
   FaBell,
   FaSearch,
   FaPlus,
-  FaEdit,
-  FaTrash,
   FaLaptop,
   FaMobileAlt,
   FaChair,
@@ -23,19 +22,19 @@ import {
 const categoryStyles = [
   {
     icon: <FaLaptop />,
-    color: "bg-blue-100 text-blue-600",
+    color: "from-blue-500 to-indigo-600",
   },
   {
     icon: <FaMobileAlt />,
-    color: "bg-green-100 text-green-600",
+    color: "from-emerald-500 to-teal-600",
   },
   {
     icon: <FaChair />,
-    color: "bg-orange-100 text-orange-600",
+    color: "from-orange-500 to-amber-600",
   },
   {
     icon: <FaTshirt />,
-    color: "bg-purple-100 text-purple-600",
+    color: "from-purple-500 to-fuchsia-600",
   },
 ];
 
@@ -348,45 +347,15 @@ const Categories = () => {
 
             {!isLoading &&
               filteredCategories.map((category) => (
-                <div
+                <CategoryCard
                   key={category._id}
-                  className="bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2"
-                >
-                  <div
-                    className={`w-20 h-20 rounded-2xl flex items-center justify-center text-4xl mb-6 ${category.color}`}
-                  >
-                    {category.icon}
-                  </div>
-
-                  <h2 className="text-2xl font-bold text-[#061539]">
-                    {category.name}
-                  </h2>
-
-                  <p className="text-gray-500 mt-2">
-                    {category.description || "No description"}
-                  </p>
-
-                  <div className="mt-6 flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => handleEditCategory(category)}
-                      className="flex-1 bg-blue-100 text-blue-600 py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all"
-                    >
-                      <FaEdit />
-                      Edit
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteCategory(category._id)}
-                      disabled={deletingId === category._id}
-                      className="flex-1 bg-red-100 text-red-600 py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-red-600 hover:text-white transition-all disabled:opacity-60"
-                    >
-                      <FaTrash />
-                      {deletingId === category._id ? "Deleting..." : "Delete"}
-                    </button>
-                  </div>
-                </div>
+                  category={category}
+                  icon={category.icon}
+                  color={category.color}
+                  onEdit={handleEditCategory}
+                  onDelete={handleDeleteCategory}
+                  isDeleting={deletingId === category._id}
+                />
               ))}
 
             {!isLoading && filteredCategories.length === 0 && (
