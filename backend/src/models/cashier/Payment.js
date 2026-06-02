@@ -25,6 +25,22 @@ const paymentSchema = new mongoose.Schema(
       default: "",
     },
 
+    paymentReference: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    gst: {
+      type: Number,
+      default: 0,
+    },
+
+    finalAmount: {
+      type: Number,
+      default: 0,
+    },
+
     paymentStatus: {
       type: String,
       enum: ["SUCCESS", "FAILED", "PENDING"],

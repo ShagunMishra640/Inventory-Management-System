@@ -7,5 +7,8 @@ exports.createPaymentValidation = [
 
   body("paymentMethod").notEmpty().withMessage("Payment method is required"),
 
-  body("status").notEmpty().withMessage("Payment status is required"),
+  body("paymentStatus")
+    .optional()
+    .isIn(["SUCCESS", "FAILED", "PENDING"])
+    .withMessage("Invalid payment status"),
 ];

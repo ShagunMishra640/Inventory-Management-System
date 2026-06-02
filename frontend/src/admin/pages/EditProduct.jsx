@@ -9,6 +9,7 @@ export default function EditProduct() {
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
+    barcode: "",
     category: "",
     stock: "",
     sellingPrice: "",
@@ -31,6 +32,7 @@ export default function EditProduct() {
         setFormData({
           name: product.name || "",
           sku: product.sku || product.id || "",
+          barcode: product.barcode || "",
           category: product.category || "",
           stock: product.stock ?? "",
           sellingPrice: product.sellingPrice ?? product.price ?? "",
@@ -109,6 +111,10 @@ export default function EditProduct() {
             <label className="space-y-2">
               <span className="block text-sm font-bold text-slate-900">SKU</span>
               <input name="sku" value={formData.sku} onChange={handleChange} required className="w-full rounded-2xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </label>
+            <label className="space-y-2">
+              <span className="block text-sm font-bold text-slate-900">Barcode</span>
+              <input name="barcode" value={formData.barcode} onChange={handleChange} placeholder="Scan or enter barcode" className="w-full rounded-2xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             </label>
             <label className="space-y-2">
               <span className="block text-sm font-bold text-slate-900">Category</span>

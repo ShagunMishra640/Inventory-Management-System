@@ -1,4 +1,5 @@
 const Payment = require("../../../models/cashier/Payment");
+const Order = require("../../../models/cashier/Order");
 
 const {
   calculateGST,
@@ -11,7 +12,7 @@ const {
 
 const createPayment = async (req, res) => {
   try {
-    const { amount } = req.body;
+    const { amount, order, paymentStatus } = req.body;
 
     // Validate amount
     if (!amount) {
@@ -29,9 +30,17 @@ const createPayment = async (req, res) => {
     // Create Payment
     const payment = await Payment.create({
       ...req.body,
+      paymentReference: req.body.paymentReference || req.body.transactionId || "",
       gst,
       finalAmount,
     });
+
+    if (order && paymentStatus === "SUCCESS") {
+      await Order.findByIdAndUpdate(order, {
+        paymentStatus: "PAID",
+        orderStatus: "COMPLETED",
+      });
+    }
 
     return res.status(201).json({
       success: true,
@@ -52,7 +61,15 @@ const createPayment = async (req, res) => {
 
 const getPayments = async (req, res) => {
   try {
-    const payments = await Payment.find().populate("order");
+    const payments = await Payment.find()
+      .populate({
+        path: "order",
+        populate: [
+          { path: "customer" },
+          { path: "cashier" },
+        ],
+      })
+      .sort({ createdAt: -1 });
 
     return res.status(200).json({
       success: true,

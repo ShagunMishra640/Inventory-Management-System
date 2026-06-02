@@ -1,6 +1,31 @@
 import { useEffect, useMemo, useState } from "react";
+import { QRCode } from "react-qr-code";
 import API from "../../api/axios";
 import { CASHIER_ENDPOINTS } from "../api/config";
+
+const MERCHANT_UPI_ID = "retailpos@upi";
+const MERCHANT_NAME = "RetailPOS";
+
+const createPaymentReference = (customerId = "GUEST") => {
+  const customerKey = String(customerId).slice(-6).toUpperCase() || "GUEST";
+  return `PAY-${customerKey}-${Date.now()}`;
+};
+
+const createUpiPaymentUrl = (amount, paymentReference) => {
+  const params = new URLSearchParams({
+    pa: MERCHANT_UPI_ID,
+    pn: MERCHANT_NAME,
+    am: Number(amount || 0).toFixed(2),
+    cu: "INR",
+    tn: `${MERCHANT_NAME} payment ${paymentReference || ""}`.trim(),
+  });
+
+  if (paymentReference) {
+    params.set("tr", paymentReference);
+  }
+
+  return `upi://pay?${params.toString()}`;
+};
 
 function Billing() {
   const [products, setProducts] = useState([]);
@@ -9,6 +34,10 @@ function Billing() {
   const [cart, setCart] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("CASH");
+  const [onlineProvider, setOnlineProvider] = useState("UPI");
+  const [paymentReference, setPaymentReference] = useState("");
+  const [transactionId, setTransactionId] = useState("");
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -42,11 +71,36 @@ function Billing() {
 
   const filteredProducts = useMemo(
     () =>
-      products.filter((product) =>
-        product.name?.toLowerCase().includes(search.toLowerCase()),
-      ),
+      products.filter((product) => {
+        const query = search.toLowerCase();
+        return (
+          product.name?.toLowerCase().includes(query) ||
+          product.sku?.toLowerCase().includes(query) ||
+          product.barcode?.toLowerCase().includes(query)
+        );
+      }),
     [products, search],
   );
+
+  const selectedCustomerData = useMemo(
+    () =>
+      customers.find(
+        (customer) =>
+          (customer._id || customer.id) === selectedCustomer,
+      ),
+    [customers, selectedCustomer],
+  );
+
+  useEffect(() => {
+    if (!selectedCustomer) {
+      setPaymentReference("");
+      return;
+    }
+
+    setPaymentReference((currentReference) =>
+      currentReference || createPaymentReference(selectedCustomer),
+    );
+  }, [selectedCustomer]);
 
   const addToCart = (product) => {
     setCart((prev) => {
@@ -91,6 +145,16 @@ function Billing() {
   const gst = Math.round(subtotal * 0.18);
   const discount = cart.length ? 0 : 0;
   const total = subtotal + gst - discount;
+  const isOnlinePayment = paymentMethod === "UPI" || paymentMethod === "CARD";
+  const upiPaymentUrl = createUpiPaymentUrl(total, paymentReference);
+
+  const generateTransactionId = () => {
+    const prefix = paymentMethod === "CARD" ? "CARD" : onlineProvider;
+    const nextReference = `${prefix}-${Date.now()}`;
+    setPaymentReference(nextReference);
+    setTransactionId(nextReference);
+    setPaymentConfirmed(false);
+  };
 
   const checkout = async () => {
     setError("");
@@ -108,6 +172,16 @@ function Billing() {
 
     if (!currentUser?._id) {
       setError("Cashier must be logged in to complete checkout.");
+      return;
+    }
+
+    if (isOnlinePayment && !(transactionId.trim() || paymentReference)) {
+      setError("Payment reference could not be generated.");
+      return;
+    }
+
+    if (isOnlinePayment && !paymentConfirmed) {
+      setError("Confirm the online payment before generating the bill.");
       return;
     }
 
@@ -131,6 +205,9 @@ function Billing() {
         order: order._id || order.id,
         amount: total,
         paymentMethod: paymentMethod.toUpperCase(),
+        transactionId: isOnlinePayment ? transactionId.trim() || paymentReference : "",
+        paymentReference,
+        paymentStatus: "SUCCESS",
       };
 
       await API.post(CASHIER_ENDPOINTS.PAYMENT_CREATE, paymentPayload);
@@ -138,6 +215,9 @@ function Billing() {
       setMessage("Bill generated and payment recorded successfully.");
       setCart([]);
       setSelectedCustomer("");
+      setPaymentReference("");
+      setTransactionId("");
+      setPaymentConfirmed(false);
     } catch (err) {
       setError(
         err.response?.data?.message || err.message || "Unable to complete checkout",
@@ -161,7 +241,7 @@ function Billing() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search Product"
+            placeholder="Search product or SKU"
             className="w-full md:w-72 border rounded-2xl px-4 py-3"
           />
         </div>
@@ -189,7 +269,13 @@ function Billing() {
             <div className="grid grid-cols-2 gap-3 w-full lg:w-auto">
               <select
                 value={selectedCustomer}
-                onChange={(e) => setSelectedCustomer(e.target.value)}
+                onChange={(e) => {
+                  const customerId = e.target.value;
+                  setSelectedCustomer(customerId);
+                  setPaymentReference(customerId ? createPaymentReference(customerId) : "");
+                  setTransactionId("");
+                  setPaymentConfirmed(false);
+                }}
                 className="border rounded-2xl px-4 py-3 w-full"
               >
                 <option value="">Select Customer</option>
@@ -201,7 +287,11 @@ function Billing() {
               </select>
               <select
                 value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
+                onChange={(e) => {
+                  setPaymentMethod(e.target.value);
+                  setTransactionId("");
+                  setPaymentConfirmed(false);
+                }}
                 className="border rounded-2xl px-4 py-3 w-full"
               >
                 <option value="CASH">Cash</option>
@@ -211,11 +301,66 @@ function Billing() {
             </div>
           </div>
 
+          {isOnlinePayment ? (
+            <div className="mt-5 rounded-3xl border border-indigo-100 bg-indigo-50 p-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
+                <div className="flex-1">
+                  <label className="text-sm font-semibold text-slate-700">
+                    Online Provider
+                  </label>
+                  <select
+                    value={onlineProvider}
+                    onChange={(e) => setOnlineProvider(e.target.value)}
+                    disabled={paymentMethod === "CARD"}
+                    className="mt-2 w-full rounded-2xl border border-indigo-100 bg-white px-4 py-3"
+                  >
+                    <option value="UPI">UPI</option>
+                    <option value="PHONEPE">PhonePe</option>
+                    <option value="GPAY">Google Pay</option>
+                    <option value="PAYTM">Paytm</option>
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="text-sm font-semibold text-slate-700">
+                    Payment Transaction ID
+                  </label>
+                  <input
+                    value={transactionId || paymentReference}
+                    onChange={(e) => {
+                      setTransactionId(e.target.value);
+                      setPaymentConfirmed(false);
+                    }}
+                    placeholder="Enter UPI/Card transaction reference"
+                    className="mt-2 w-full rounded-2xl border border-indigo-100 bg-white px-4 py-3"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={generateTransactionId}
+                  className="rounded-2xl bg-indigo-600 px-5 py-3 font-semibold text-white"
+                >
+                  Generate Reference
+                </button>
+              </div>
+
+              <label className="mt-4 flex items-center gap-3 text-sm font-semibold text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={paymentConfirmed}
+                  onChange={(e) => setPaymentConfirmed(e.target.checked)}
+                  className="h-5 w-5 accent-indigo-600"
+                />
+                Payment received and verified
+              </label>
+            </div>
+          ) : null}
+
           <div className="overflow-x-auto mt-6">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-100">
                 <tr>
                   <th className="p-4">Product</th>
+                  <th className="p-4">SKU / Barcode</th>
                   <th className="p-4">Price</th>
                   <th className="p-4">Qty</th>
                   <th className="p-4">Total</th>
@@ -227,6 +372,12 @@ function Billing() {
                   filteredProducts.map((product) => (
                     <tr key={product._id || product.id} className="border-b last:border-b-0 hover:bg-slate-50 transition-colors">
                       <td className="p-4">{product.name}</td>
+                      <td className="p-4">
+                        <p>{product.sku || "—"}</p>
+                        <p className="text-xs text-gray-500">
+                          {product.barcode || "No barcode"}
+                        </p>
+                      </td>
                       <td className="p-4">₹{product.sellingPrice ?? product.price ?? 0}</td>
                       <td className="p-4">{product.stock ?? "—"}</td>
                       <td className="p-4">₹{product.sellingPrice ?? product.price ?? 0}</td>
@@ -243,7 +394,7 @@ function Billing() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="p-6 text-center text-gray-500">
+                    <td colSpan={6} className="p-6 text-center text-gray-500">
                       {loading ? "Loading products..." : "No products found."}
                     </td>
                   </tr>
@@ -271,6 +422,49 @@ function Billing() {
             <div className="border-t pt-3 flex justify-between font-bold text-lg">
               <span>Total</span>
               <span>₹{total}</span>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-indigo-100 bg-indigo-50 p-5">
+            <div className="flex flex-col items-center gap-4 text-center">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <QRCode
+                  value={upiPaymentUrl}
+                  size={176}
+                  className="h-44 w-44"
+                  title="UPI payment QR code"
+                />
+              </div>
+              <div className="w-full space-y-3">
+                <div>
+                  <p className="text-sm font-semibold text-slate-500">Payment Scanner</p>
+                  <h3 className="text-xl font-bold text-slate-900">Scan and Pay</h3>
+                </div>
+                <div className="rounded-2xl bg-white p-4 text-left text-sm text-slate-700">
+                  <p>
+                    <span className="font-semibold">Merchant:</span> {MERCHANT_NAME}
+                  </p>
+                  <p>
+                    <span className="font-semibold">UPI ID:</span> {MERCHANT_UPI_ID}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Customer:</span>{" "}
+                    {selectedCustomerData?.name ||
+                      selectedCustomerData?.fullName ||
+                      "Select customer"}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Payment Ref:</span>{" "}
+                    {paymentReference || "Auto generated"}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Amount:</span> ₹{total}
+                  </p>
+                </div>
+                <p className="text-sm text-slate-500">
+                  Customer can scan this code after products are added to the bill.
+                </p>
+              </div>
             </div>
           </div>
 

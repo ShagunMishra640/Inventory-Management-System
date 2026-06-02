@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import API from "../../api/axios";
 import { CASHIER_ENDPOINTS } from "../api/config";
 
+const formatCurrency = (value) =>
+  `₹${Number(value || 0).toLocaleString("en-IN")}`;
+
 function Payments() {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -11,6 +14,7 @@ function Payments() {
     const fetchPayments = async () => {
       setLoading(true);
       setError("");
+
       try {
         const response = await API.get(CASHIER_ENDPOINTS.PAYMENTS);
         setPayments(response.data?.payments || response.data?.data || []);
@@ -26,11 +30,16 @@ function Payments() {
     fetchPayments();
   }, []);
 
+  const totalBy = (value, field = "paymentMethod") =>
+    payments
+      .filter((payment) => String(payment[field] || "").toUpperCase() === value)
+      .reduce((sum, payment) => sum + Number(payment.amount || payment.finalAmount || 0), 0);
+
   const summaryCards = [
-    { label: "Cash Payments", value: "₹8,250" },
-    { label: "UPI Payments", value: "₹12,400" },
-    { label: "Card Payments", value: "₹6,700" },
-    { label: "Pending Payments", value: "₹1,200" },
+    { label: "Cash Payments", value: formatCurrency(totalBy("CASH")) },
+    { label: "UPI Payments", value: formatCurrency(totalBy("UPI")) },
+    { label: "Card Payments", value: formatCurrency(totalBy("CARD")) },
+    { label: "Pending Payments", value: formatCurrency(totalBy("PENDING", "paymentStatus")) },
   ];
 
   return (
@@ -62,8 +71,11 @@ function Payments() {
               <tr>
                 <th className="p-4">Payment ID</th>
                 <th className="p-4">Order ID</th>
+                <th className="p-4">Customer</th>
                 <th className="p-4">Amount</th>
                 <th className="p-4">Method</th>
+                <th className="p-4">Reference</th>
+                <th className="p-4">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -71,22 +83,35 @@ function Payments() {
                 payments.map((payment) => {
                   const paymentId = payment._id || payment.id;
                   const orderId =
-                    payment.order?.orderNumber || payment.order || payment.orderId || "—";
-                  const amount = payment.amount || payment.totalAmount || "—";
-                  const method = payment.method || payment.paymentMethod || "—";
+                    payment.order?.orderNumber ||
+                    payment.order?._id ||
+                    payment.order ||
+                    payment.orderId ||
+                    "-";
+                  const customerName =
+                    payment.order?.customer?.name ||
+                    payment.customer?.name ||
+                    "-";
+                  const amount = payment.amount || payment.finalAmount || payment.totalAmount || 0;
+                  const method = payment.method || payment.paymentMethod || "-";
+                  const reference =
+                    payment.paymentReference || payment.transactionId || "-";
 
                   return (
                     <tr key={paymentId} className="border-b last:border-b-0">
                       <td className="p-4">{paymentId}</td>
                       <td className="p-4">{orderId}</td>
-                      <td className="p-4">₹{amount}</td>
+                      <td className="p-4">{customerName}</td>
+                      <td className="p-4">{formatCurrency(amount)}</td>
                       <td className="p-4">{method}</td>
+                      <td className="p-4">{reference}</td>
+                      <td className="p-4">{payment.paymentStatus || "PENDING"}</td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={4} className="p-6 text-center text-gray-500">
+                  <td colSpan={7} className="p-6 text-center text-gray-500">
                     No payments found.
                   </td>
                 </tr>
