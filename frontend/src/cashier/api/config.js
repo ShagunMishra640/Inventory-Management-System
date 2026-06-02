@@ -9,4 +9,9 @@ export const CASHIER_ENDPOINTS = {
   PAYMENT_CREATE: `${BASE_URL}/payment/create`,
   PAYMENTS: `${BASE_URL}/payment`,
   CART: `${BASE_URL}/cart`,
+  DISCOUNTS: `${BASE_URL}/discount`,
+  REFUND_CREATE: `${BASE_URL}/refund/create`,
+  CUSTOMER_CREATE: `${BASE_URL}/customer/create`,
+  CUSTOMER_UPDATE: `${BASE_URL}/customer/update`,
+  CUSTOMER_DELETE: `${BASE_URL}/customer/delete`,
 };

@@ -9,9 +9,9 @@ function Customers() {
   const [message, setMessage] = useState("");
 
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newCustomer, setNewCustomer] = useState({ name: "", phone: "" });
+  const [newCustomer, setNewCustomer] = useState({ name: "", email: "", phone: "" });
   const [editingCustomerId, setEditingCustomerId] = useState(null);
-  const [editCustomer, setEditCustomer] = useState({ name: "", phone: "" });
+  const [editCustomer, setEditCustomer] = useState({ name: "", email: "", phone: "" });
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -36,56 +36,103 @@ function Customers() {
     setMessage("Customer history is available in the next release.");
   };
 
-  const handleAddCustomer = () => {
-    if (!newCustomer.name.trim()) {
-      setMessage("Enter a customer name before adding.");
+  const handleAddCustomer = async () => {
+    if (!newCustomer.name.trim() || !newCustomer.email.trim() || !newCustomer.phone.trim()) {
+      setMessage("Enter customer name, email, and phone before adding.");
       return;
     }
 
-    const createdCustomer = {
-      _id: `new-${Date.now()}`,
-      name: newCustomer.name,
-      phone: newCustomer.phone,
-      orders: 0,
-    };
+    setLoading(true);
+    setError("");
 
-    setCustomers((prev) => [createdCustomer, ...prev]);
-    setMessage("Customer added successfully.");
-    setNewCustomer({ name: "", phone: "" });
-    setShowAddForm(false);
+    try {
+      const response = await API.post(CASHIER_ENDPOINTS.CUSTOMER_CREATE, newCustomer);
+      const createdCustomer = response.data?.customer || response.data?.data;
+
+      setCustomers((prev) => [createdCustomer, ...prev]);
+      setMessage("Customer added successfully.");
+      setNewCustomer({ name: "", email: "", phone: "" });
+      setShowAddForm(false);
+    } catch (err) {
+      setError(
+        err.response?.data?.message || err.message || "Unable to add customer",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEditCustomer = (customer) => {
     setEditingCustomerId(customer._id || customer.id);
     setEditCustomer({
       name: customer.name || "",
+      email: customer.email || "",
       phone: customer.phone || customer.phoneNumber || "",
     });
   };
 
-  const handleSaveEditCustomer = () => {
-    setCustomers((prev) =>
-      prev.map((customer) =>
-        customer._id === editingCustomerId || customer.id === editingCustomerId
-          ? { ...customer, ...editCustomer }
-          : customer,
-      ),
-    );
-    setMessage("Customer updated successfully.");
-    setEditingCustomerId(null);
-    setEditCustomer({ name: "", phone: "" });
+  const handleSaveEditCustomer = async () => {
+    if (!editCustomer.name.trim() || !editCustomer.email.trim() || !editCustomer.phone.trim()) {
+      setMessage("Enter customer name, email, and phone before saving.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await API.put(
+        `${CASHIER_ENDPOINTS.CUSTOMER_UPDATE}/${editingCustomerId}`,
+        editCustomer,
+      );
+      const updatedCustomer = response.data?.customer || response.data?.data || {
+        _id: editingCustomerId,
+        ...editCustomer,
+      };
+
+      setCustomers((prev) =>
+        prev.map((customer) =>
+          customer._id === editingCustomerId || customer.id === editingCustomerId
+            ? { ...customer, ...updatedCustomer }
+            : customer,
+        ),
+      );
+      setMessage("Customer updated successfully.");
+      setEditingCustomerId(null);
+      setEditCustomer({ name: "", email: "", phone: "" });
+    } catch (err) {
+      setError(
+        err.response?.data?.message || err.message || "Unable to update customer",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeleteCustomer = (customerId) => {
-    setCustomers((prev) =>
-      prev.filter((customer) => customer._id !== customerId && customer.id !== customerId),
-    );
-    setMessage("Customer removed successfully.");
+  const handleDeleteCustomer = async (customerId) => {
+    if (!confirm("Delete this customer?")) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      await API.delete(`${CASHIER_ENDPOINTS.CUSTOMER_DELETE}/${customerId}`);
+      setCustomers((prev) =>
+        prev.filter((customer) => customer._id !== customerId && customer.id !== customerId),
+      );
+      setMessage("Customer removed successfully.");
+    } catch (err) {
+      setError(
+        err.response?.data?.message || err.message || "Unable to delete customer",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancelEdit = () => {
     setEditingCustomerId(null);
-    setEditCustomer({ name: "", phone: "" });
+    setEditCustomer({ name: "", email: "", phone: "" });
   };
 
   return (
@@ -121,12 +168,19 @@ function Customers() {
 
       {showAddForm ? (
         <div className="bg-white rounded-3xl shadow p-6 border border-slate-200">
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-4">
             <input
               type="text"
               value={newCustomer.name}
               onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
               placeholder="Customer name"
+              className="border rounded-2xl px-4 py-3"
+            />
+            <input
+              type="email"
+              value={newCustomer.email}
+              onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
+              placeholder="Email address"
               className="border rounded-2xl px-4 py-3"
             />
             <input
@@ -157,6 +211,7 @@ function Customers() {
             <thead className="bg-slate-100">
               <tr>
                 <th className="p-4">Name</th>
+                <th className="p-4">Email</th>
                 <th className="p-4">Phone</th>
                 <th className="p-4">Orders</th>
                 <th className="p-4">Actions</th>
@@ -181,6 +236,20 @@ function Customers() {
                           />
                         ) : (
                           customer.name
+                        )}
+                      </td>
+                      <td className="p-4">
+                        {isEditing ? (
+                          <input
+                            type="email"
+                            className="w-full rounded-2xl border border-slate-200 px-3 py-2"
+                            value={editCustomer.email}
+                            onChange={(e) =>
+                              setEditCustomer({ ...editCustomer, email: e.target.value })
+                            }
+                          />
+                        ) : (
+                          customer.email || "â€”"
                         )}
                       </td>
                       <td className="p-4">
@@ -239,7 +308,7 @@ function Customers() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={4} className="p-6 text-center text-gray-500">
+                  <td colSpan={5} className="p-6 text-center text-gray-500">
                     No customers available.
                   </td>
                 </tr>

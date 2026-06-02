@@ -30,9 +30,13 @@ const createUpiPaymentUrl = (amount, paymentReference) => {
 function Billing() {
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [discounts, setDiscounts] = useState([]);
   const [search, setSearch] = useState("");
+  const [barcodeInput, setBarcodeInput] = useState("");
   const [cart, setCart] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState("");
+  const [selectedDiscount, setSelectedDiscount] = useState("");
+  const [manualDiscount, setManualDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState("CASH");
   const [onlineProvider, setOnlineProvider] = useState("UPI");
   const [paymentReference, setPaymentReference] = useState("");
@@ -50,13 +54,15 @@ function Billing() {
       setError("");
 
       try {
-        const [productRes, customerRes] = await Promise.all([
+        const [productRes, customerRes, discountRes] = await Promise.all([
           API.get(CASHIER_ENDPOINTS.PRODUCTS),
           API.get(CASHIER_ENDPOINTS.CUSTOMERS),
+          API.get(CASHIER_ENDPOINTS.DISCOUNTS),
         ]);
 
         setProducts(productRes.data?.data || []);
-        setCustomers(customerRes.data?.customers || []);
+        setCustomers(customerRes.data?.customers || customerRes.data?.data || []);
+        setDiscounts(discountRes.data?.discounts || discountRes.data?.data || []);
       } catch (err) {
         setError(
           err.response?.data?.message || err.message || "Unable to load billing data",
@@ -141,9 +147,48 @@ function Billing() {
     setCart((prev) => prev.filter((item) => item.productId !== productId));
   };
 
+  const scanBarcode = () => {
+    const code = barcodeInput.trim().toLowerCase();
+
+    if (!code) {
+      setError("Scan or enter a barcode first.");
+      return;
+    }
+
+    const product = products.find(
+      (item) =>
+        String(item.barcode || "").toLowerCase() === code ||
+        String(item.sku || "").toLowerCase() === code,
+    );
+
+    if (!product) {
+      setError(`No product found for barcode ${barcodeInput}.`);
+      return;
+    }
+
+    addToCart(product);
+    setBarcodeInput("");
+    setError("");
+    setMessage(`${product.name} added from barcode scan.`);
+  };
+
+  const activeDiscount = useMemo(
+    () =>
+      discounts.find(
+        (discountItem) =>
+          (discountItem._id || discountItem.id) === selectedDiscount,
+      ),
+    [discounts, selectedDiscount],
+  );
+
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const gst = Math.round(subtotal * 0.18);
-  const discount = cart.length ? 0 : 0;
+  const offerDiscount = activeDiscount
+    ? activeDiscount.discountType === "PERCENTAGE"
+      ? Math.round((subtotal * Number(activeDiscount.discountValue || 0)) / 100)
+      : Number(activeDiscount.discountValue || 0)
+    : 0;
+  const discount = Math.min(subtotal, Math.max(0, offerDiscount + Number(manualDiscount || 0)));
   const total = subtotal + gst - discount;
   const isOnlinePayment = paymentMethod === "UPI" || paymentMethod === "CARD";
   const upiPaymentUrl = createUpiPaymentUrl(total, paymentReference);
@@ -241,7 +286,7 @@ function Billing() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search product or SKU"
+            placeholder="Search product, SKU, or barcode"
             className="w-full md:w-72 border rounded-2xl px-4 py-3"
           />
         </div>
@@ -261,12 +306,37 @@ function Billing() {
 
       <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6">
         <div className="bg-white rounded-3xl shadow p-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-5">
             <div>
               <h2 className="text-2xl font-bold">Product List</h2>
               <p className="text-gray-500">Tap a product to add it to the cart.</p>
             </div>
-            <div className="grid grid-cols-2 gap-3 w-full lg:w-auto">
+
+            <div className="grid gap-3">
+              <div className="grid grid-cols-[minmax(220px,1fr)_auto] gap-3">
+                <input
+                  type="text"
+                  value={barcodeInput}
+                  onChange={(e) => setBarcodeInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      scanBarcode();
+                    }
+                  }}
+                  placeholder="Scan barcode"
+                  className="min-w-0 border rounded-2xl px-4 py-3"
+                />
+                <button
+                  type="button"
+                  onClick={scanBarcode}
+                  className="rounded-2xl bg-slate-900 text-white px-4 py-3"
+                >
+                  Scan
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
               <select
                 value={selectedCustomer}
                 onChange={(e) => {
@@ -298,6 +368,27 @@ function Billing() {
                 <option value="UPI">UPI</option>
                 <option value="CARD">Card</option>
               </select>
+              <select
+                value={selectedDiscount}
+                onChange={(e) => setSelectedDiscount(e.target.value)}
+                className="border rounded-2xl px-4 py-3 w-full"
+              >
+                <option value="">No Offer</option>
+                {discounts.map((discountItem) => (
+                  <option key={discountItem._id || discountItem.id} value={discountItem._id || discountItem.id}>
+                    {discountItem.discountName} - {discountItem.discountType === "PERCENTAGE" ? `${discountItem.discountValue}%` : `₹${discountItem.discountValue}`}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="number"
+                min="0"
+                value={manualDiscount}
+                onChange={(e) => setManualDiscount(Number(e.target.value || 0))}
+                placeholder="Manual discount"
+                className="border rounded-2xl px-4 py-3 w-full"
+              />
+              </div>
             </div>
           </div>
 
@@ -419,6 +510,12 @@ function Billing() {
               <span>Discount</span>
               <span>₹{discount}</span>
             </div>
+            {activeDiscount ? (
+              <div className="flex justify-between text-sm text-emerald-700">
+                <span>Offer Applied</span>
+                <span>{activeDiscount.discountName}</span>
+              </div>
+            ) : null}
             <div className="border-t pt-3 flex justify-between font-bold text-lg">
               <span>Total</span>
               <span>₹{total}</span>

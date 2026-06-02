@@ -8,9 +8,14 @@ import {
   FaBoxes,
   FaClipboardList,
   FaChartBar,
+  FaChartLine,
   FaCog,
+  FaKey,
   FaSignOutAlt,
   FaBell,
+  FaPercent,
+  FaStore,
+  FaUserShield,
 } from "react-icons/fa";
 
 import { useApp } from "../context/AppContext";
@@ -27,6 +32,11 @@ export default function Layout() {
     { name: "Products", path: "/admin/product", icon: FaBoxes },
     { name: "Orders", path: "/admin/order", icon: FaClipboardList },
     { name: "Users", path: "/admin/users", icon: FaUsers },
+    { name: "Manage User Roles", path: "/admin/roles", icon: FaUserShield },
+    { name: "Tax Configuration", path: "/admin/tax", icon: FaPercent },
+    { name: "Store Management", path: "/admin/store", icon: FaStore },
+    { name: "Business Analytics", path: "/admin/analytics", icon: FaChartLine },
+    { name: "API Control", path: "/admin/api-control", icon: FaKey },
     { name: "Reports", path: "/admin/report", icon: FaChartBar },
     { name: "Settings", path: "/admin/setting", icon: FaCog },
   ];
@@ -51,7 +61,7 @@ export default function Layout() {
           </div>
 
           {/* MENU */}
-          <nav className="space-y-1">
+          <nav className="space-y-1 max-h-[calc(100vh-9rem)] overflow-y-auto pr-1">
             {menuItems.map((item) => {
               const Icon = item.icon;
 

@@ -10,6 +10,8 @@ function Orders() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [refundOrder, setRefundOrder] = useState(null);
+  const [refundForm, setRefundForm] = useState({ refundAmount: "", refundReason: "" });
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -84,6 +86,50 @@ function Orders() {
       ),
     );
     setMessage(`Order ${orderId} cancelled.`);
+  };
+
+  const openRefund = (order) => {
+    const amount = order.totalAmount || order.amount || 0;
+    setRefundOrder(order);
+    setRefundForm({ refundAmount: amount, refundReason: "" });
+    setMessage("");
+    setError("");
+  };
+
+  const submitRefund = async () => {
+    const orderId = refundOrder?._id || refundOrder?.id;
+
+    if (!orderId) {
+      setError("Cannot create refund because order ID is missing.");
+      return;
+    }
+
+    if (!Number(refundForm.refundAmount || 0) || !refundForm.refundReason.trim()) {
+      setError("Enter refund amount and reason.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      await API.post(CASHIER_ENDPOINTS.REFUND_CREATE, {
+        order: orderId,
+        refundAmount: Number(refundForm.refundAmount),
+        refundReason: refundForm.refundReason,
+        refundStatus: "PENDING",
+      });
+
+      setMessage(`Refund request created for order ${formatOrderId(refundOrder)}.`);
+      setRefundOrder(null);
+      setRefundForm({ refundAmount: "", refundReason: "" });
+    } catch (err) {
+      setError(
+        err.response?.data?.message || err.message || "Unable to create refund",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -172,6 +218,13 @@ function Orders() {
                         </button>
                         <button
                           type="button"
+                          onClick={() => openRefund(order)}
+                          className="rounded-2xl bg-amber-500 text-white px-3 py-2"
+                        >
+                          Refund
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => handleCancelOrder(orderId)}
                           className="rounded-2xl bg-red-600 text-white px-3 py-2"
                         >
@@ -213,6 +266,62 @@ function Orders() {
               <p className="text-sm text-gray-500">Status</p>
               <p className="font-medium">{selectedOrder.status || selectedOrder.orderStatus || "Pending"}</p>
             </div>
+          </div>
+        </div>
+      ) : null}
+
+      {refundOrder ? (
+        <div className="bg-white rounded-3xl shadow p-6 border border-amber-100">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5">
+            <div>
+              <h2 className="text-xl font-semibold">Create Refund</h2>
+              <p className="text-sm text-gray-500">
+                Order {formatOrderId(refundOrder)}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setRefundOrder(null)}
+              className="rounded-2xl bg-slate-100 px-4 py-2 text-slate-700"
+            >
+              Cancel
+            </button>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-[180px_1fr_auto]">
+            <input
+              type="number"
+              min="1"
+              value={refundForm.refundAmount}
+              onChange={(e) =>
+                setRefundForm((current) => ({
+                  ...current,
+                  refundAmount: e.target.value,
+                }))
+              }
+              placeholder="Refund amount"
+              className="border rounded-2xl px-4 py-3"
+            />
+            <input
+              type="text"
+              value={refundForm.refundReason}
+              onChange={(e) =>
+                setRefundForm((current) => ({
+                  ...current,
+                  refundReason: e.target.value,
+                }))
+              }
+              placeholder="Refund reason"
+              className="border rounded-2xl px-4 py-3"
+            />
+            <button
+              type="button"
+              disabled={loading}
+              onClick={submitRefund}
+              className="rounded-2xl bg-amber-500 text-white px-5 py-3 disabled:opacity-50"
+            >
+              Submit Refund
+            </button>
           </div>
         </div>
       ) : null}

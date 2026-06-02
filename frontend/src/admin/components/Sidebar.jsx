@@ -8,6 +8,11 @@ import {
   FileText,
   Settings,
   LogOut,
+  BarChart3,
+  Building2,
+  KeyRound,
+  Percent,
+  Shield,
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -21,6 +26,11 @@ export default function Sidebar() {
     { name: "Products", path: "/admin/product", icon: FileText },
     { name: "Orders", path: "/admin/order", icon: FileText },
     { name: "Users", path: "/admin/users", icon: Users },
+    { name: "Manage User Roles", path: "/admin/roles", icon: Shield },
+    { name: "Tax Configuration", path: "/admin/tax", icon: Percent },
+    { name: "Store Management", path: "/admin/store", icon: Building2 },
+    { name: "Business Analytics", path: "/admin/analytics", icon: BarChart3 },
+    { name: "API Control", path: "/admin/api-control", icon: KeyRound },
     { name: "Reports", path: "/admin/report", icon: FileText },
     { name: "Settings", path: "/admin/setting", icon: Settings },
   ];

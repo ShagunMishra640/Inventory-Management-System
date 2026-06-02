@@ -65,6 +65,7 @@ const logoutRoutes = require("./src/modules/auth/routes/logoutRoutes");
 const adminRoutes = require("./src/modules/admin/routes/adminRoutes");
 const reportRoutes = require("./src/modules/admin/routes/reportRoutes");
 const settingsRoutes = require("./src/modules/admin/routes/settingsRoutes");
+const taxRoutes = require("./src/modules/admin/routes/taxRoutes");
 
 // CASHIER
 
@@ -125,6 +126,7 @@ app.use("/api/auth", logoutRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/tax-settings", taxRoutes);
 
 // CASHIER
 

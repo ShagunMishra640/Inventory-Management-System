@@ -13,6 +13,11 @@ import POSTerminal from "../pages/POSTerminal";
 import AdminRegister from "../pages/AdminRegister";
 import Unauthorized from "../pages/Unauthorized";
 import Login from "../pages/Login";
+import ApiControl from "../pages/ApiControl";
+import BusinessAnalytics from "../pages/BusinessAnalytics";
+import RoleManagement from "../pages/RoleManagement";
+import StoreManagement from "../pages/StoreManagement";
+import TaxConfiguration from "../pages/TaxConfiguration";
 
 import Layout from "../components/Layout";
 import ProtectedRoute from "../components/ProtectedRoute";
@@ -40,6 +45,11 @@ function AdminRoutes() {
         <Route path="edit-product/:id" element={<EditProduct />} />
         <Route path="order" element={<Order />} />
         <Route path="users" element={<Users />} />
+        <Route path="roles" element={<RoleManagement />} />
+        <Route path="tax" element={<TaxConfiguration />} />
+        <Route path="store" element={<StoreManagement />} />
+        <Route path="analytics" element={<BusinessAnalytics />} />
+        <Route path="api-control" element={<ApiControl />} />
         <Route path="report" element={<Report />} />
         <Route path="terminal" element={<POSTerminal />} />
         <Route path="setting" element={<Setting />} />
