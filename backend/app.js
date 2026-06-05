@@ -30,7 +30,7 @@ app.use(express.urlencoded({ extended: true }));
 // LOAD MODELS (CASHIER)
 // =========================
 
-require("./src/models/cashier/Cart");
+require("./src/models/cashier/Cart.js");
 
 require("./src/models/cashier/Customer");
 
