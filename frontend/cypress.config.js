@@ -45,7 +45,7 @@ async function ensureDevServer() {
     return;
   }
 
-  devServer = spawn("npm", ["run", "dev"], {
+  devServer = spawn("npm", ["run", "dev:e2e"], {
     cwd: process.cwd(),
     shell: true,
     stdio: "inherit",
