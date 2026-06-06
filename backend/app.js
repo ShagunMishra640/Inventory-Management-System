@@ -6,7 +6,7 @@ require("dotenv").config();
 
 const cors = require("cors");
 
-const connectDB = require("./config/db");
+const connectDB = require("./config/db.js");
 
 const app = express();
 
@@ -30,7 +30,7 @@ app.use(express.urlencoded({ extended: true }));
 // LOAD MODELS (CASHIER)
 // =========================
 
-require("./src/models/cashier/Cart");
+require("./src/models/cashier/Cart.js");
 
 require("./src/models/cashier/Customer");
 
