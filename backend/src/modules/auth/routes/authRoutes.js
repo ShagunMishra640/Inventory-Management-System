@@ -7,6 +7,7 @@ const router = express.Router();
 const {
   registerUser,
   loginUser,
+  forgotPassword,
   getProfile,
   updateProfile,
 } = require("../controllers/authController");
@@ -16,6 +17,7 @@ const {
 const {
   registerValidation,
   loginValidation,
+  forgotPasswordValidation,
 } = require("../../../validations/authValidation");
 
 // ================= MIDDLEWARE =================
@@ -45,6 +47,13 @@ router.post(
   validationMiddleware,
 
   loginUser,
+);
+
+router.post(
+  "/forgot-password",
+  forgotPasswordValidation,
+  validationMiddleware,
+  forgotPassword,
 );
 
 router.get("/profile", protect, getProfile);

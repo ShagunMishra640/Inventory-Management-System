@@ -17,3 +17,7 @@ exports.loginValidation = [
 
   body("password").notEmpty().withMessage("Password required"),
 ];
+
+exports.forgotPasswordValidation = [
+  body("email").isEmail().withMessage("Valid email required"),
+];

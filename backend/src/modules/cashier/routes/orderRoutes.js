@@ -18,7 +18,7 @@ const protect = require("../../../middlewares/authMiddleware");
 
 const authorizeRoles = require("../../../middlewares/roleMiddleware");
 
-const orderRoles = ["cashier", "admin", "inventory-manager"];
+const orderRoles = ["cashier", "admin", "inventory-manager", "manager"];
 
 // ================= CREATE ORDER =================
 
@@ -93,7 +93,7 @@ router.delete(
 
   protect,
 
-  authorizeRoles("admin", "inventory-manager"),
+  authorizeRoles(...orderRoles),
 
   deleteOrder,
 );
@@ -103,7 +103,7 @@ router.delete(
 
   protect,
 
-  authorizeRoles("admin", "inventory-manager"),
+  authorizeRoles(...orderRoles),
 
   deleteOrder,
 );

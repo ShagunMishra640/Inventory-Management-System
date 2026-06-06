@@ -1,8 +1,27 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/auth/userModel");
 
-const normalizeRole = (role) =>
-  role ? String(role).toLowerCase().trim() : undefined;
+const normalizeRole = (role) => {
+  const normalized = role
+    ? String(role).toLowerCase().trim().replace(/[\s_]+/g, "-")
+    : "";
+
+  if (!normalized) return undefined;
+
+  if (normalized === "administrator") {
+    return "admin";
+  }
+
+  if (
+    normalized === "manager" ||
+    normalized === "inventory" ||
+    normalized === "sales-manager"
+  ) {
+    return "inventory-manager";
+  }
+
+  return normalized;
+};
 
 const protect = async (req, res, next) => {
   try {

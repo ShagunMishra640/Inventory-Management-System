@@ -31,6 +31,18 @@ const paymentSchema = new mongoose.Schema(
       trim: true,
     },
 
+    paymentGateway: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    gatewayQrId: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
     gst: {
       type: Number,
       default: 0,

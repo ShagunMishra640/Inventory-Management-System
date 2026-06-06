@@ -6,6 +6,7 @@ const router = express.Router();
 
 const {
   createPayment,
+  createRazorpayQr,
   getPayments,
   getSinglePayment,
   updatePayment,
@@ -40,6 +41,15 @@ router.post(
 // ================= GET ALL PAYMENTS =================
 
 router.get("/", protect, authorizeRoles("admin", "cashier"), getPayments);
+
+// ================= CREATE RAZORPAY QR =================
+
+router.post(
+  "/razorpay/qr",
+  protect,
+  authorizeRoles("admin", "cashier"),
+  createRazorpayQr,
+);
 
 // ================= GET SINGLE PAYMENT =================
 

@@ -6,6 +6,19 @@ const {
   calculateFinalAmount,
 } = require("../services/paymentService");
 
+const RAZORPAY_QR_URL = "https://api.razorpay.com/v1/payments/qr_codes";
+
+const createRazorpayAuthHeader = () => {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!keyId || !keySecret) {
+    return null;
+  }
+
+  return `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString("base64")}`;
+};
+
 // ======================================================
 // CREATE PAYMENT
 // ======================================================
@@ -46,6 +59,78 @@ const createPayment = async (req, res) => {
       success: true,
       message: "Payment created successfully",
       payment,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ======================================================
+// CREATE RAZORPAY QR
+// ======================================================
+
+const createRazorpayQr = async (req, res) => {
+  try {
+    const { amount, paymentReference, customerName } = req.body;
+    const numericAmount = Number(amount);
+    const authHeader = createRazorpayAuthHeader();
+
+    if (!authHeader) {
+      return res.status(400).json({
+        success: false,
+        message: "Razorpay API keys are not configured.",
+      });
+    }
+
+    if (!numericAmount || numericAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "A valid amount is required to create Razorpay QR.",
+      });
+    }
+
+    const reference = paymentReference || `RZP-${Date.now()}`;
+    const closeBy = Math.floor(Date.now() / 1000) + 15 * 60;
+
+    const razorpayResponse = await fetch(RAZORPAY_QR_URL, {
+      method: "POST",
+      headers: {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        type: "upi_qr",
+        name: "RetailPOS Dynamic QR",
+        usage: "single_use",
+        fixed_amount: true,
+        payment_amount: Math.round(numericAmount * 100),
+        description: `RetailPOS payment ${reference}`,
+        close_by: closeBy,
+        notes: {
+          paymentReference: reference,
+          customerName: customerName || "Walk-in customer",
+        },
+      }),
+    });
+
+    const data = await razorpayResponse.json();
+
+    if (!razorpayResponse.ok) {
+      return res.status(razorpayResponse.status).json({
+        success: false,
+        message:
+          data?.error?.description ||
+          data?.error?.reason ||
+          "Unable to create Razorpay QR.",
+      });
+    }
+
+    return res.status(201).json({
+      success: true,
+      qrCode: data,
     });
   } catch (error) {
     return res.status(500).json({
@@ -196,6 +281,7 @@ const deletePayment = async (req, res) => {
 
 module.exports = {
   createPayment,
+  createRazorpayQr,
   getPayments,
   getSinglePayment,
   updatePayment,

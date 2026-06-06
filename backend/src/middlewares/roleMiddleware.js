@@ -1,5 +1,22 @@
-const normalizeRole = (role) =>
-  role ? String(role).toLowerCase().trim() : "";
+const normalizeRole = (role) => {
+  const normalized = role
+    ? String(role).toLowerCase().trim().replace(/[\s_]+/g, "-")
+    : "";
+
+  if (normalized === "administrator") {
+    return "admin";
+  }
+
+  if (
+    normalized === "manager" ||
+    normalized === "inventory" ||
+    normalized === "sales-manager"
+  ) {
+    return "inventory-manager";
+  }
+
+  return normalized;
+};
 
 const authorizeRoles = (...roles) => {
   const normalizedRoles = roles.map(normalizeRole);
