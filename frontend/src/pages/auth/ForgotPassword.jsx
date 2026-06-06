@@ -5,28 +5,39 @@ import {
   FaKey as Key,
   FaArrowLeft as ArrowLeft
 } from "react-icons/fa";
+import { forgotPassword } from "../../services/authService";
 
 function ForgotPassword() {
 
   const [email, setEmail] = useState("");
 
   const [message, setMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
   // HANDLE SUBMIT
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
 
     e.preventDefault();
 
-    if (!email) {
+    const trimmedEmail = email.trim().toLowerCase();
+
+    if (!trimmedEmail) {
 
       setMessage("Please enter your email");
 
       return;
     }
 
-    setMessage("Password reset link sent to your email");
-
-    console.log({ email });
+    try {
+      setIsSending(true);
+      setMessage("");
+      const data = await forgotPassword(trimmedEmail);
+      setMessage(data.message || "Password reset message sent to your email");
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setIsSending(false);
+    }
 
   };
 
@@ -104,9 +115,10 @@ function ForgotPassword() {
           {/* BUTTON */}
           <button
             type="submit"
-            className="w-full bg-white text-purple-700 font-bold py-4 rounded-2xl shadow-lg hover:bg-gray-100 hover:scale-105 transition duration-300"
+            disabled={isSending}
+            className="w-full bg-white text-purple-700 font-bold py-4 rounded-2xl shadow-lg hover:bg-gray-100 hover:scale-105 transition duration-300 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:scale-100"
           >
-            Send Reset Link
+            {isSending ? "Sending..." : "Send Reset Link"}
           </button>
 
         </form>

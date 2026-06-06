@@ -6,6 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "cypress:open": "set ELECTRON_RUN_AS_NODE=&& cypress open",
+    "cypress:run": "set ELECTRON_RUN_AS_NODE=&& cypress run",
+    "cypress:record": "set ELECTRON_RUN_AS_NODE=&& cypress run --record",
+    "cypress:verify": "set ELECTRON_RUN_AS_NODE=&& cypress verify",
+    "test:e2e": "npm run cypress:run",
+    "test:e2e:open": "npm run cypress:open",
+    "test:e2e:record": "npm run cypress:record",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -36,11 +43,13 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "autoprefixer": "^10.5.0",
+    "cypress": "^15.16.0",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
     "postcss": "^8.5.15",
+    "start-server-and-test": "^3.0.6",
     "tailwindcss": "^3.4.19",
     "vite": "^8.0.12"
   }

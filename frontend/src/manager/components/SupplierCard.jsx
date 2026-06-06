@@ -22,23 +22,23 @@ export default function SupplierCard({
     )}`;
 
   return (
-    <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden">
+    <div className="h-full bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col">
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-500 to-green-600 p-5 text-white">
+      <div className="min-h-[150px] bg-gradient-to-r from-emerald-500 to-green-600 p-5 text-white flex items-center">
         <div className="flex items-center gap-4">
           <img
             src={avatarUrl}
             alt={supplier.name || "Supplier"}
-            className="w-16 h-16 rounded-full border-4 border-white object-cover"
+            className="w-16 h-16 shrink-0 rounded-full border-4 border-white object-cover"
           />
 
-          <div>
-            <h2 className="text-xl font-bold">
+          <div className="min-w-0">
+            <h2 className="text-xl font-bold leading-tight break-words">
               {supplier.name}
             </h2>
 
-            <p className="text-sm opacity-90">
+            <p className="text-sm opacity-90 mt-2 break-words">
               Supplier ID: {displayId}
             </p>
           </div>
@@ -46,28 +46,28 @@ export default function SupplierCard({
       </div>
 
       {/* Body */}
-      <div className="p-5">
+      <div className="p-5 flex flex-1 flex-col">
 
         <div className="space-y-3">
 
-          <div className="flex items-center gap-3 text-gray-700">
-            <FaEnvelope className="text-blue-500" />
-            <span>{supplier.email || "-"}</span>
+          <div className="flex items-start gap-3 text-gray-700">
+            <FaEnvelope className="mt-1 shrink-0 text-blue-500" />
+            <span className="min-w-0 break-words">{supplier.email || "-"}</span>
           </div>
 
-          <div className="flex items-center gap-3 text-gray-700">
-            <FaPhone className="text-green-500" />
-            <span>{supplier.phone || "-"}</span>
+          <div className="flex items-start gap-3 text-gray-700">
+            <FaPhone className="mt-1 shrink-0 text-green-500" />
+            <span className="min-w-0 break-words">{supplier.phone || "-"}</span>
           </div>
 
-          <div className="flex items-center gap-3 text-gray-700">
-            <FaMapMarkerAlt className="text-red-500" />
-            <span>{supplier.address || "Address not added"}</span>
+          <div className="flex items-start gap-3 text-gray-700">
+            <FaMapMarkerAlt className="mt-1 shrink-0 text-red-500" />
+            <span className="min-w-0 break-words">{supplier.address || "Address not added"}</span>
           </div>
 
-          <div className="flex items-center gap-3 text-gray-700">
-            <FaTruck className="text-orange-500" />
-            <span>
+          <div className="flex items-start gap-3 text-gray-700">
+            <FaTruck className="mt-1 shrink-0 text-orange-500" />
+            <span className="min-w-0 break-words">
               Products Supplied:{" "}
               {supplier.products || 0}
             </span>
@@ -89,7 +89,7 @@ export default function SupplierCard({
         </div>
 
         {/* Buttons */}
-        <div className="flex gap-3 mt-6">
+        <div className="flex gap-3 mt-auto pt-6">
 
           <button
             type="button"

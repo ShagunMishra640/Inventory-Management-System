@@ -210,7 +210,7 @@ const Suppliers = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-4 gap-6 mb-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch mb-10">
             <div className="bg-white p-7 rounded-3xl shadow-sm">
               <div className="flex justify-between">
                 <div>

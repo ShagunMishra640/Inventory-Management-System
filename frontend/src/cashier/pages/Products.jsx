@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import API from "../../api/axios";
 import { CASHIER_ENDPOINTS } from "../api/config";
+import {
+  FaEdit,
+  FaPlus,
+  FaSave,
+  FaTimes,
+  FaTrash,
+} from "react-icons/fa";
 
 function Products() {
   const [search, setSearch] = useState("");
@@ -138,9 +145,19 @@ function Products() {
           <button
             type="button"
             onClick={() => setShowAddForm((prev) => !prev)}
-            className="rounded-2xl bg-blue-600 text-white px-5 py-3"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 text-white px-5 py-3 font-semibold"
           >
-            {showAddForm ? "Cancel" : "Add Product"}
+            {showAddForm ? (
+              <>
+                <FaTimes />
+                Cancel
+              </>
+            ) : (
+              <>
+                <FaPlus />
+                Add Product
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -186,8 +203,9 @@ function Products() {
           <button
             type="button"
             onClick={handleAddProduct}
-            className="mt-5 rounded-2xl bg-blue-600 text-white px-6 py-3"
+            className="mt-5 inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 text-white px-6 py-3 font-semibold"
           >
+            <FaSave />
             Save Product
           </button>
         </div>
@@ -274,41 +292,47 @@ function Products() {
                           `₹${product.sellingPrice ?? product.price ?? "—"}`
                         )}
                       </td>
-                      <td className="p-3 space-x-2">
+                      <td className="p-3">
                         {isEditing ? (
-                          <>
+                          <div className="flex flex-wrap items-center gap-2">
                             <button
                               type="button"
                               onClick={handleSaveEdit}
-                              className="rounded-xl bg-green-600 text-white px-3 py-1 text-sm"
+                              className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 text-white px-3 py-2 text-sm font-semibold"
                             >
-                              Save
+                              <FaSave />
+                              Update
                             </button>
                             <button
                               type="button"
                               onClick={handleCancelEdit}
-                              className="rounded-xl bg-slate-300 text-slate-800 px-3 py-1 text-sm"
+                              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-300 text-slate-800 px-3 py-2 text-sm font-semibold"
                             >
+                              <FaTimes />
                               Cancel
                             </button>
-                          </>
+                          </div>
                         ) : (
-                          <>
+                          <div className="flex flex-wrap items-center gap-2">
                             <button
                               type="button"
                               onClick={() => handleEditProduct(product)}
-                              className="rounded-xl bg-blue-600 text-white px-3 py-1 text-sm"
+                              aria-label="Edit product"
+                              title="Edit"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white text-sm"
                             >
-                              Edit
+                              <FaEdit />
                             </button>
                             <button
                               type="button"
                               onClick={() => handleDeleteProduct(productId)}
-                              className="rounded-xl bg-red-600 text-white px-3 py-1 text-sm"
+                              aria-label="Delete product"
+                              title="Delete"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-red-600 text-white text-sm"
                             >
-                              Delete
+                              <FaTrash />
                             </button>
-                          </>
+                          </div>
                         )}
                       </td>
                     </tr>

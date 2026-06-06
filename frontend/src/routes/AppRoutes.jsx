@@ -8,6 +8,7 @@ import CashierRoutes from "../cashier/routes/CashierRoutes";
 import AdminRoutes from "../admin/routes/AdminRoutes";
 import { AdminAppProvider } from "../admin/context/AppContext";
 import ManagerRoutes from "../manager/routes/ManagerRoutes";
+import ProtectedRoute from "./ProtectedRoute";
 
 function AppRoutes() {
   return (
@@ -22,7 +23,14 @@ function AppRoutes() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
 
       {/* Cashier routes */}
-      <Route path="/cashier/*" element={<CashierRoutes />} />
+      <Route
+        path="/cashier/*"
+        element={
+          <ProtectedRoute allowedRoles={["cashier"]}>
+            <CashierRoutes />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Admin routes */}
       <Route
@@ -35,7 +43,14 @@ function AppRoutes() {
       />
 
       {/* Manager routes */}
-      <Route path="/manager/*" element={<ManagerRoutes />} />
+      <Route
+        path="/manager/*"
+        element={
+          <ProtectedRoute allowedRoles={["inventory-manager", "manager"]}>
+            <ManagerRoutes />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/login" replace />} />

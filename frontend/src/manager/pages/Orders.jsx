@@ -49,6 +49,15 @@ const getProductNames = (order) => {
   return names.length ? names.join(", ") : "Order products";
 };
 
+const getOrderId = (order) => order?._id || order?.id;
+
+const getApiErrorMessage = (error, fallback) => {
+  const status = error.response?.status;
+  const message = error.response?.data?.message || error.message || fallback;
+
+  return status ? `${message} (HTTP ${status})` : message;
+};
+
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -135,7 +144,14 @@ const Orders = () => {
   );
 
   const startEdit = (order) => {
-    setEditingId(order._id);
+    const orderId = getOrderId(order);
+
+    if (!orderId) {
+      setError("Order id is missing. This order cannot be edited.");
+      return;
+    }
+
+    setEditingId(orderId);
     setEditForm({
       paymentStatus: order.paymentStatus || "PENDING",
       orderStatus: order.orderStatus || "PLACED",
@@ -153,16 +169,24 @@ const Orders = () => {
   };
 
   const handleUpdate = async (id) => {
+    if (!id) {
+      setError("Order id is missing. This order cannot be updated.");
+      return;
+    }
+
     try {
       setIsSaving(true);
       setError("");
       setMessage("");
 
       const response = await updateOrder(id, editForm);
-      const updatedOrder = response.order;
+      const updatedOrder = response.order || response.data || {
+        ...orders.find((order) => getOrderId(order) === id),
+        ...editForm,
+      };
 
       setOrders((current) =>
-        current.map((order) => (order._id === id ? updatedOrder : order)),
+        current.map((order) => (getOrderId(order) === id ? updatedOrder : order)),
       );
       setMessage("Order updated successfully");
       cancelEdit();
@@ -174,6 +198,11 @@ const Orders = () => {
   };
 
   const handleDelete = async (id) => {
+    if (!id) {
+      setError("Order id is missing. This order cannot be deleted.");
+      return;
+    }
+
     if (!window.confirm("Are you sure you want to delete this order?")) {
       return;
     }
@@ -182,14 +211,20 @@ const Orders = () => {
       setDeletingId(id);
       setError("");
       setMessage("");
-      await deleteOrder(id);
-      setOrders((current) => current.filter((order) => order._id !== id));
+      const response = await deleteOrder(id);
+
+      if (response?.success === false) {
+        throw new Error(response.message || "Order delete failed");
+      }
+
+      setOrders((current) => current.filter((order) => getOrderId(order) !== id));
       if (editingId === id) {
         cancelEdit();
       }
       setMessage("Order deleted successfully");
+      await loadOrders();
     } catch (err) {
-      setError(err.response?.data?.message || "Order delete failed");
+      setError(getApiErrorMessage(err, "Order delete failed"));
     } finally {
       setDeletingId("");
     }
@@ -356,12 +391,12 @@ const Orders = () => {
             </select>
           </div>
 
-          <div className="bg-white rounded-3xl overflow-hidden shadow-sm">
-            <table className="w-full">
+          <div className="bg-white rounded-3xl overflow-x-auto shadow-sm">
+            <table className="min-w-[980px] w-full table-auto">
               <thead className="bg-[#f8f9fc] text-gray-500 text-lg">
                 <tr>
-                  <th className="p-6 text-left">CUSTOMER</th>
-                  <th className="p-6 text-left">PRODUCT</th>
+                  <th className="p-6 text-left min-w-[280px]">CUSTOMER</th>
+                  <th className="p-6 text-left min-w-[220px]">PRODUCT</th>
                   <th className="p-6 text-left">AMOUNT</th>
                   <th className="p-6 text-left">PAYMENT</th>
                   <th className="p-6 text-left">STATUS</th>
@@ -379,32 +414,35 @@ const Orders = () => {
                 )}
 
                 {!isLoading &&
-                  filteredOrders.map((order) => (
+                  filteredOrders.map((order) => {
+                    const orderId = getOrderId(order);
+
+                    return (
                     <tr
-                      key={order._id}
+                      key={orderId || order.displayId}
                       className="border-t hover:bg-[#f8f9fc] transition-all duration-300"
                     >
-                      <td className="p-6">
+                      <td className="p-6 min-w-[280px]">
                         <div className="flex items-center gap-5">
                           <img
                             src={order.image}
                             alt=""
-                            className="w-20 h-20 rounded-2xl object-cover"
+                            className="w-20 h-20 shrink-0 rounded-2xl object-cover"
                           />
 
-                          <div>
-                            <h3 className="font-bold text-2xl text-[#061539]">
+                          <div className="min-w-0">
+                            <h3 className="font-bold text-2xl text-[#061539] break-words leading-tight">
                               {order.customerName}
                             </h3>
 
-                            <p className="text-gray-500 mt-2">
+                            <p className="text-gray-500 mt-2 break-words">
                               {order.displayId}
                             </p>
                           </div>
                         </div>
                       </td>
 
-                      <td className="p-6 text-xl font-medium">
+                      <td className="p-6 min-w-[220px] text-xl font-medium break-words leading-snug">
                         {order.productName}
                       </td>
 
@@ -413,7 +451,7 @@ const Orders = () => {
                       </td>
 
                       <td className="p-6">
-                        {editingId === order._id ? (
+                        {editingId === orderId ? (
                           <select
                             value={editForm.paymentStatus}
                             onChange={(event) =>
@@ -444,7 +482,7 @@ const Orders = () => {
                       </td>
 
                       <td className="p-6">
-                        {editingId === order._id ? (
+                        {editingId === orderId ? (
                           <select
                             value={editForm.orderStatus}
                             onChange={(event) =>
@@ -476,12 +514,12 @@ const Orders = () => {
 
                       <td className="p-6">
                         <div className="flex items-center gap-4">
-                          {editingId === order._id ? (
+                          {editingId === orderId ? (
                             <>
                               <button
                                 type="button"
-                                onClick={() => handleUpdate(order._id)}
-                                disabled={isSaving}
+                                onClick={() => handleUpdate(orderId)}
+                                disabled={isSaving || !orderId}
                                 className="px-5 h-14 rounded-xl bg-blue-600 text-white font-semibold disabled:opacity-60"
                               >
                                 Save
@@ -507,8 +545,8 @@ const Orders = () => {
 
                           <button
                             type="button"
-                            onClick={() => handleDelete(order._id)}
-                            disabled={deletingId === order._id}
+                            onClick={() => handleDelete(orderId)}
+                            disabled={deletingId === orderId || !orderId}
                             className="w-14 h-14 rounded-xl border flex items-center justify-center text-red-500 hover:bg-red-50 disabled:opacity-60"
                           >
                             <FaTrash />
@@ -523,7 +561,8 @@ const Orders = () => {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
 
                 {!isLoading && filteredOrders.length === 0 && (
                   <tr>

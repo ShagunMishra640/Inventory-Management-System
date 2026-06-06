@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import profileImage from "../../assets/rutika-profile.jpeg";
 import snehaPatilImage from "../../assets/sneha-patil.jpeg";
+
 import {
   createEmployee,
   deleteEmployee,
@@ -25,7 +26,7 @@ import {
 const emptyForm = {
   name: "",
   email: "",
-  role: "cashier",
+  role: "Manager",
   password: "",
 };
 
@@ -41,12 +42,42 @@ const salaryByRole = {
   "inventory-manager": "Rs. 45,000",
 };
 
+const atulUdareImage = "/atul-udare.jpg";
+
+const atulUdareEmployee = {
+  _id: "atul-udare-local",
+  name: "Shagun Mishra",
+  email: "shagun.mishra@gmail.com",
+  role: "inventory-manager",
+  status: "active",
+  image: atulUdareImage,
+};
+
 const getEmployeeImage = (employee) => {
-  if (employee.email?.toLowerCase().includes("siddhi")) {
+  const customImage = employee.image || employee.avatar || employee.photo;
+
+  if (customImage) {
+    return customImage;
+  }
+
+  const employeeName = employee.name?.toLowerCase() || "";
+  const employeeEmail = employee.email?.toLowerCase() || "";
+
+  if (
+    employeeName.includes("atul udare") ||
+    employeeName.includes("atul udhare") ||
+    employeeEmail.includes("atul.udare") ||
+    employeeEmail.includes("atul.udhare") ||
+    employeeEmail.includes("atul")
+  ) {
+    return atulUdareImage;
+  }
+
+  if (employeeEmail.includes("siddhi")) {
     return snehaPatilImage;
   }
 
-  if (employee.email?.toLowerCase().includes("rpujari")) {
+  if (employeeEmail.includes("rpujari")) {
     return profileImage;
   }
 
@@ -55,6 +86,8 @@ const getEmployeeImage = (employee) => {
 
 const Employees = () => {
   const [employees, setEmployees] = useState([]);
+  const [localAtulEmployee, setLocalAtulEmployee] = useState(atulUdareEmployee);
+  const [isAtulDeleted, setIsAtulDeleted] = useState(false);
   const [formData, setFormData] = useState(emptyForm);
   const [editingId, setEditingId] = useState("");
   const [deletingId, setDeletingId] = useState("");
@@ -85,8 +118,25 @@ const Employees = () => {
   }, []);
 
   const employeeRows = useMemo(
-    () =>
-      employees.map((employee, index) => {
+    () => {
+      const hasAtulEmployee = employees.some((employee) => {
+        const employeeName = employee.name?.toLowerCase() || "";
+        const employeeEmail = employee.email?.toLowerCase() || "";
+
+        return (
+          employeeName.includes("atul udare") ||
+          employeeName.includes("atul udhare") ||
+          employeeEmail.includes("atul.udare") ||
+          employeeEmail.includes("atul.udhare")
+        );
+      });
+
+      const rows =
+        hasAtulEmployee || isAtulDeleted
+          ? employees
+          : [...employees, localAtulEmployee];
+
+      return rows.map((employee, index) => {
         const status = employee.status || "active";
 
         return {
@@ -97,8 +147,9 @@ const Employees = () => {
           statusLabel: status === "inactive" ? "Inactive" : "Active",
           image: getEmployeeImage(employee),
         };
-      }),
-    [employees],
+      });
+    },
+    [employees, isAtulDeleted, localAtulEmployee],
   );
 
   const filteredEmployees = useMemo(() => {
@@ -175,6 +226,16 @@ const Employees = () => {
         payload.password = formData.password;
       }
 
+      if (editingId === localAtulEmployee._id) {
+        setLocalAtulEmployee((current) => ({
+          ...current,
+          ...payload,
+        }));
+        setMessage("Atul Udare updated successfully");
+        resetForm();
+        return;
+      }
+
       if (editingId) {
         await updateEmployee(editingId, payload);
         setMessage("Employee updated successfully");
@@ -206,6 +267,16 @@ const Employees = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this employee?")) {
+      return;
+    }
+
+    if (id === localAtulEmployee._id) {
+      setIsAtulDeleted(true);
+      if (editingId === id) {
+        resetForm();
+      }
+      setError("");
+      setMessage("Atul Udare deleted successfully");
       return;
     }
 
@@ -477,6 +548,11 @@ const Employees = () => {
                           <img
                             src={employee.image}
                             alt={employee.name}
+                            onError={(event) => {
+                              event.currentTarget.src = `https://i.pravatar.cc/150?u=${
+                                employee._id || employee.email || employee.name
+                              }`;
+                            }}
                             className="w-20 h-20 rounded-2xl object-cover"
                           />
 
@@ -521,7 +597,7 @@ const Employees = () => {
                           <button
                             type="button"
                             onClick={() => handleEdit(employee)}
-                            className="w-14 h-14 rounded-xl border flex items-center justify-center text-blue-600 hover:bg-blue-50"
+                            className="w-14 h-14 rounded-xl border flex items-center justify-center text-blue-600 hover:bg-blue-50 disabled:opacity-60"
                           >
                             <FaEdit />
                           </button>

@@ -15,12 +15,10 @@ import {
   FaMoon,
   FaGlobe,
   FaSave,
-  FaCamera,
   FaUserCog,
   FaToggleOn,
   FaToggleOff,
   FaShieldAlt,
-  FaClipboardCheck,
 } from "react-icons/fa";
 
 const initialSettings = {
@@ -37,6 +35,8 @@ const initialSettings = {
   darkMode: true,
   twoFactorAuth: true,
 };
+
+const LANGUAGE_STORAGE_KEY = "managerSettingsLanguage";
 
 const translations = {
   English: {
@@ -77,83 +77,6 @@ const translations = {
     languageDesc: "Select preferred language",
     twoFactor: "Two Factor Authentication",
     twoFactorDesc: "Extra security for admin login",
-    profileRole: "Inventory Management Admin",
-    department: "Department",
-    departmentValue: "Inventory & Sales",
-    systemAccess: "System Access",
-    fullAccess: "Full Access",
-    lastLogin: "Last Login",
-    todayLogin: "Today, 09:45 AM",
-    quickSettings: "Quick Settings",
-    quickDesc: "Quickly manage inventory reports, stock alerts and security settings.",
-    generateReports: "Generate Reports",
-    backupInventory: "Backup Inventory",
-    auditLogs: "Audit Logs",
-    systemStatus: "System Status",
-    systemStatusDesc: "Inventory system health",
-    database: "Database",
-    active: "Active",
-    inventorySync: "Inventory Sync",
-    running: "Running",
-    pending: "Pending",
-  },
-  Marathi: {
-    search: "सेटिंग्ज शोधा...",
-    title: "सेटिंग्ज",
-    subtitle: "इन्व्हेंटरी व्यवस्थापन प्रणालीची प्राधान्ये आणि नियंत्रण व्यवस्थापित करा.",
-    save: "बदल सेव्ह करा",
-    saving: "सेव्ह होत आहे...",
-    loading: "सेटिंग्ज लोड होत आहेत...",
-    saved: "सेटिंग्ज यशस्वीरित्या सेव्ह झाल्या",
-    loadError: "सेटिंग्ज लोड झाल्या नाहीत",
-    saveError: "सेटिंग्ज सेव्ह झाल्या नाहीत",
-    accountTitle: "खाते सेटिंग्ज",
-    accountSubtitle: "प्रोफाइल आणि खाते माहिती व्यवस्थापित करा",
-    fullName: "पूर्ण नाव",
-    email: "ईमेल पत्ता",
-    mobile: "मोबाइल नंबर",
-    role: "भूमिका",
-    securityTitle: "सुरक्षा सेटिंग्ज",
-    securitySubtitle: "तुमचे इन्व्हेंटरी व्यवस्थापन खाते सुरक्षित ठेवा",
-    currentPassword: "सध्याचा पासवर्ड",
-    newPassword: "नवीन पासवर्ड",
-    confirmPassword: "पासवर्ड पुष्टी करा",
-    inventoryTitle: "इन्व्हेंटरी नियंत्रण",
-    inventorySubtitle: "इन्व्हेंटरी ट्रॅकिंग आणि मॉनिटरिंग सेट करा",
-    lowStockAlerts: "कमी स्टॉक सूचना",
-    lowStockAlertsDesc: "स्टॉक कमी झाल्यावर सूचना द्या",
-    lowStockLimit: "कमी स्टॉक मर्यादा",
-    autoReports: "ऑटो रिपोर्ट्स",
-    autoReportsDesc: "साप्ताहिक इन्व्हेंटरी रिपोर्ट तयार करा",
-    cloudBackup: "क्लाउड बॅकअप",
-    cloudBackupDesc: "इन्व्हेंटरी डेटा आपोआप बॅकअप करा",
-    appearanceTitle: "दिसणे आणि प्राधान्ये",
-    appearanceSubtitle: "डॅशबोर्डचा लुक आणि फील बदला",
-    darkMode: "डार्क मोड",
-    darkModeDesc: "डार्क डॅशबोर्ड थीम सुरू करा",
-    language: "भाषा",
-    languageDesc: "पसंतीची भाषा निवडा",
-    twoFactor: "दोन-घटक प्रमाणीकरण",
-    twoFactorDesc: "अॅडमिन लॉगिनसाठी अतिरिक्त सुरक्षा",
-    profileRole: "इन्व्हेंटरी व्यवस्थापन अॅडमिन",
-    department: "विभाग",
-    departmentValue: "इन्व्हेंटरी आणि विक्री",
-    systemAccess: "सिस्टम प्रवेश",
-    fullAccess: "पूर्ण प्रवेश",
-    lastLogin: "शेवटचा लॉगिन",
-    todayLogin: "आज, 09:45 AM",
-    quickSettings: "जलद सेटिंग्ज",
-    quickDesc: "इन्व्हेंटरी रिपोर्ट्स, स्टॉक सूचना आणि सुरक्षा सेटिंग्ज जलद व्यवस्थापित करा.",
-    generateReports: "रिपोर्ट तयार करा",
-    backupInventory: "इन्व्हेंटरी बॅकअप",
-    auditLogs: "ऑडिट लॉग्स",
-    systemStatus: "सिस्टम स्थिती",
-    systemStatusDesc: "इन्व्हेंटरी सिस्टम आरोग्य",
-    database: "डेटाबेस",
-    active: "सक्रिय",
-    inventorySync: "इन्व्हेंटरी सिंक",
-    running: "चालू आहे",
-    pending: "प्रलंबित",
   },
 };
 
@@ -170,9 +93,13 @@ const Settings = () => {
         setIsLoading(true);
         setError("");
         const data = await getSettings();
-        setSettings((current) => ({ ...current, ...data }));
-      } catch (err) {
-        setError(err?.response?.data?.message || err.message || translations.English.loadError);
+        setSettings((current) => ({
+          ...current,
+          ...data,
+          language: initialSettings.language,
+        }));
+      } catch {
+        setError("Settings backend is not reachable. Default settings are shown.");
       } finally {
         setIsLoading(false);
       }
@@ -183,17 +110,50 @@ const Settings = () => {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
+    const nextValue =
+      name === "language"
+        ? initialSettings.language
+        : name === "lowStockLimit"
+          ? Number(value)
+          : value;
+
+    if (name === "language") {
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, initialSettings.language);
+    }
+
     setSettings((current) => ({
       ...current,
-      [name]: name === "lowStockLimit" ? Number(value) : value,
+      [name]: nextValue,
     }));
   };
 
-  const toggleSetting = (name) => {
-    setSettings((current) => ({
-      ...current,
-      [name]: !current[name],
-    }));
+  const toggleSetting = async (name) => {
+    const nextSettings = {
+      ...settings,
+      [name]: !settings[name],
+      language: initialSettings.language,
+    };
+    const previousSettings = settings;
+
+    setSettings(nextSettings);
+    setMessage("");
+    setError("");
+
+    try {
+      setIsSaving(true);
+      const savedSettings = await updateSettings(nextSettings);
+      setSettings((current) => ({
+        ...current,
+        ...savedSettings,
+        language: initialSettings.language,
+      }));
+      setMessage(`${translations.English[name] || "Setting"} updated successfully`);
+    } catch {
+      setSettings(previousSettings);
+      setError("Setting could not be saved. Please keep the backend server running.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSave = async () => {
@@ -201,11 +161,20 @@ const Settings = () => {
       setIsSaving(true);
       setError("");
       setMessage("");
-      const savedSettings = await updateSettings(settings);
-      setSettings((current) => ({ ...current, ...savedSettings }));
-      setMessage((translations[savedSettings.language] || translations.English).saved);
-    } catch (err) {
-      setError(err?.response?.data?.message || err.message || text.saveError);
+      const settingsPayload = {
+        ...settings,
+        language: initialSettings.language,
+      };
+      const savedSettings = await updateSettings(settingsPayload);
+      setSettings((current) => ({
+        ...current,
+        ...savedSettings,
+        language: settingsPayload.language,
+      }));
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, settingsPayload.language);
+      setMessage((translations[settingsPayload.language] || translations.English).saved);
+    } catch {
+      setError("Settings could not be saved. Please keep the backend server running.");
     } finally {
       setIsSaving(false);
     }
@@ -217,10 +186,57 @@ const Settings = () => {
     ) : (
       <FaToggleOff className="text-5xl text-gray-400" />
     );
-  const text = translations[settings.language] || translations.English;
+  const text = translations.English;
+  const isDarkMode = Boolean(settings.darkMode);
 
   return (
-    <div className="flex bg-[#f4f7fe] min-h-screen">
+    <div
+      className={`manager-settings-page flex min-h-screen overflow-x-hidden ${
+        isDarkMode ? "dark bg-slate-950" : "bg-[#f4f7fe]"
+      }`}
+    >
+      <style>{`
+        .manager-settings-page.dark {
+          color: #e5e7eb;
+        }
+
+        .manager-settings-page.dark .settings-main {
+          background: #0f172a;
+        }
+
+        .manager-settings-page.dark .settings-surface,
+        .manager-settings-page.dark .bg-white,
+        .manager-settings-page.dark [class*="bg-[#f4f7fe]"] {
+          background: #111827 !important;
+          border-color: #243044 !important;
+          box-shadow: none !important;
+        }
+
+        .manager-settings-page.dark [class*="text-[#061539]"],
+        .manager-settings-page.dark h1,
+        .manager-settings-page.dark h2,
+        .manager-settings-page.dark h3,
+        .manager-settings-page.dark label,
+        .manager-settings-page.dark .font-semibold {
+          color: #f8fafc !important;
+        }
+
+        .manager-settings-page.dark p,
+        .manager-settings-page.dark .text-gray-500 {
+          color: #94a3b8 !important;
+        }
+
+        .manager-settings-page.dark input,
+        .manager-settings-page.dark select {
+          background: #0f172a !important;
+          color: #f8fafc !important;
+          border-color: #334155 !important;
+        }
+
+        .manager-settings-page.dark input::placeholder {
+          color: #64748b !important;
+        }
+      `}</style>
 
       {/* SIDEBAR */}
 
@@ -228,11 +244,14 @@ const Settings = () => {
 
       {/* MAIN */}
 
-      <div className="ml-[280px] w-full">
+      <div
+        className="settings-main ml-[280px] min-h-screen overflow-x-hidden"
+        style={{ width: "calc(100vw - 280px)" }}
+      >
 
         {/* TOPBAR */}
 
-        <div className="bg-white border-b px-10 py-6 flex justify-between items-center">
+        <div className="settings-surface bg-white border-b px-8 py-5 flex justify-between items-center">
 
           {/* SEARCH */}
 
@@ -289,7 +308,7 @@ const Settings = () => {
 
         {/* PAGE */}
 
-        <div className="p-10">
+        <div className="p-6">
 
           {/* HEADER */}
 
@@ -340,11 +359,7 @@ const Settings = () => {
 
           {/* GRID */}
 
-          <div className="grid grid-cols-3 gap-8">
-
-            {/* LEFT */}
-
-            <div className="col-span-2 space-y-8">
+          <div className="space-y-6">
 
               {/* ACCOUNT SETTINGS */}
 
@@ -536,6 +551,7 @@ const Settings = () => {
                     <button
                       type="button"
                       onClick={() => toggleSetting("lowStockAlerts")}
+                      disabled={isSaving}
                       aria-label="Toggle low stock alerts"
                     >
                       <ToggleIcon enabled={settings.lowStockAlerts} />
@@ -580,6 +596,7 @@ const Settings = () => {
                     <button
                       type="button"
                       onClick={() => toggleSetting("autoReports")}
+                      disabled={isSaving}
                       aria-label="Toggle auto reports"
                     >
                       <ToggleIcon enabled={settings.autoReports} />
@@ -610,6 +627,7 @@ const Settings = () => {
                     <button
                       type="button"
                       onClick={() => toggleSetting("cloudBackup")}
+                      disabled={isSaving}
                       aria-label="Toggle cloud backup"
                     >
                       <ToggleIcon enabled={settings.cloudBackup} />
@@ -669,6 +687,7 @@ const Settings = () => {
                     <button
                       type="button"
                       onClick={() => toggleSetting("darkMode")}
+                      disabled={isSaving}
                       aria-label="Toggle dark mode"
                     >
                       <ToggleIcon enabled={settings.darkMode} />
@@ -704,7 +723,6 @@ const Settings = () => {
                     >
 
                       <option value="English">English</option>
-                      <option value="Marathi">मराठी</option>
 
                     </select>
                   </div>
@@ -733,6 +751,7 @@ const Settings = () => {
                     <button
                       type="button"
                       onClick={() => toggleSetting("twoFactorAuth")}
+                      disabled={isSaving}
                       aria-label="Toggle two factor authentication"
                     >
                       <ToggleIcon enabled={settings.twoFactorAuth} />
@@ -740,171 +759,6 @@ const Settings = () => {
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* RIGHT */}
-
-            <div className="space-y-8">
-
-              {/* PROFILE CARD */}
-
-              <div className="bg-white rounded-3xl p-8 shadow-sm text-center">
-
-                <div className="relative w-fit mx-auto">
-
-                  <img
-                    src="/Rutika.jpg.jpeg"
-                    alt=""
-                    className="w-40 h-40 rounded-full object-cover border-4 border-blue-100"
-                  />
-
-                  <button className="absolute bottom-2 right-2 bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg">
-
-                    <FaCamera />
-
-                  </button>
-                </div>
-
-                <h2 className="text-3xl font-bold mt-6 text-[#061539]">
-                  Rutika Pujari
-                </h2>
-
-                <p className="text-gray-500 mt-2">
-                  {text.profileRole}
-                </p>
-
-                <div className="mt-8 space-y-4 text-left">
-
-                  <div className="bg-[#f4f7fe] rounded-2xl p-4">
-
-                    <p className="text-gray-500">
-                      {text.department}
-                    </p>
-
-                    <h3 className="font-semibold mt-1">
-                      {text.departmentValue}
-                    </h3>
-                  </div>
-
-                  <div className="bg-[#f4f7fe] rounded-2xl p-4">
-
-                    <p className="text-gray-500">
-                      {text.systemAccess}
-                    </p>
-
-                    <h3 className="font-semibold mt-1 text-green-600">
-                      {text.fullAccess}
-                    </h3>
-                  </div>
-
-                  <div className="bg-[#f4f7fe] rounded-2xl p-4">
-
-                    <p className="text-gray-500">
-                      {text.lastLogin}
-                    </p>
-
-                    <h3 className="font-semibold mt-1">
-                      {text.todayLogin}
-                    </h3>
-                  </div>
-                </div>
-              </div>
-
-              {/* QUICK SETTINGS */}
-
-              <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl p-8 text-white shadow-xl">
-
-                <h2 className="text-3xl font-bold">
-                  {text.quickSettings}
-                </h2>
-
-                <p className="mt-4 text-blue-100 leading-relaxed">
-                  {text.quickDesc}
-                </p>
-
-                <div className="mt-8 space-y-4">
-
-                  <button className="w-full bg-white text-blue-700 py-4 rounded-2xl font-bold hover:scale-105 transition-all duration-300">
-
-                    {text.generateReports}
-                  </button>
-
-                  <button className="w-full bg-white/20 border border-white/20 py-4 rounded-2xl font-bold hover:bg-white/30 transition-all duration-300">
-
-                    {text.backupInventory}
-                  </button>
-
-                  <button className="w-full bg-white/20 border border-white/20 py-4 rounded-2xl font-bold hover:bg-white/30 transition-all duration-300">
-
-                    {text.auditLogs}
-                  </button>
-                </div>
-              </div>
-
-              {/* SYSTEM STATUS */}
-
-              <div className="bg-white rounded-3xl p-8 shadow-sm">
-
-                <div className="flex items-center gap-4 mb-6">
-
-                  <div className="w-14 h-14 rounded-2xl bg-green-100 text-green-600 flex items-center justify-center text-2xl">
-
-                    <FaClipboardCheck />
-
-                  </div>
-
-                  <div>
-
-                    <h2 className="text-2xl font-bold text-[#061539]">
-                      {text.systemStatus}
-                    </h2>
-
-                    <p className="text-gray-500">
-                      {text.systemStatusDesc}
-                    </p>
-
-                  </div>
-                </div>
-
-                <div className="space-y-5">
-
-                  <div className="flex justify-between items-center">
-
-                    <span className="font-semibold">
-                      {text.database}
-                    </span>
-
-                    <span className="text-green-600 font-bold">
-                      {text.active}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-
-                    <span className="font-semibold">
-                      {text.inventorySync}
-                    </span>
-
-                    <span className="text-green-600 font-bold">
-                      {text.running}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-
-                    <span className="font-semibold">
-                      {text.cloudBackup}
-                    </span>
-
-                    <span className="text-yellow-500 font-bold">
-                      {text.pending}
-                    </span>
-                  </div>
-
-                </div>
-              </div>
-
-            </div>
           </div>
         </div>
       </div>

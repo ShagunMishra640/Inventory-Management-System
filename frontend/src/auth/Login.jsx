@@ -5,6 +5,19 @@ import { loginUser } from "../services/authService";
 
 import { FaLock, FaMailBulk, FaEye, FaEyeSlash } from "react-icons/fa";
 
+const normalizeRole = (role) => {
+  const normalized = String(role || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+
+  if (normalized === "manager" || normalized === "inventory") {
+    return "inventory-manager";
+  }
+
+  return normalized;
+};
+
 function Login() {
   const navigate = useNavigate();
 
@@ -43,14 +56,16 @@ function Login() {
         email: formData.email.trim().toLowerCase(),
       });
 
-      const role = data.user?.role;
+      const role = normalizeRole(data.user?.role);
+      const user = { ...data.user, role };
 
       localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("user", JSON.stringify(user));
 
       const dashboardPath = {
         cashier: "/cashier/dashboard",
         "inventory-manager": "/manager/dashboard",
+        manager: "/manager/dashboard",
       }[role];
 
       if (!dashboardPath) {

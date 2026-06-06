@@ -9,3 +9,8 @@ export const updateProfile = async (profileData) => {
   const response = await API.put("/auth/profile", profileData);
   return response.data?.user || {};
 };
+
+export const getProfileActivities = async () => {
+  const response = await API.get("/manager/dashboard/profile-activities");
+  return response.data?.data || [];
+};

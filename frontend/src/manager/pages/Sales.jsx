@@ -85,7 +85,11 @@ const Sales = () => {
         }
       } catch (err) {
         if (isMounted) {
-          setError(err?.response?.data?.message || err.message || "Sales backend not responding");
+          const status = err?.response?.status;
+          const message =
+            err?.response?.data?.message || err.message || "Sales backend not responding";
+
+          setError(status === 403 ? "" : message);
         }
       } finally {
         if (isMounted) {

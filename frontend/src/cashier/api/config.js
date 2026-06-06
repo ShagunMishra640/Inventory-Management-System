@@ -7,6 +7,7 @@ export const CASHIER_ENDPOINTS = {
   ORDERS: `${BASE_URL}/orders`,
   ORDER_CREATE: `${BASE_URL}/order/create`,
   PAYMENT_CREATE: `${BASE_URL}/payment/create`,
+  RAZORPAY_QR_CREATE: `${BASE_URL}/payment/razorpay/qr`,
   PAYMENTS: `${BASE_URL}/payment`,
   CART: `${BASE_URL}/cart`,
   DISCOUNTS: `${BASE_URL}/discount`,

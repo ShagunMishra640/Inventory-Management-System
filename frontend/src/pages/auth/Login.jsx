@@ -3,6 +3,19 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaLock, FaMailBulk, FaEye, FaEyeSlash } from "react-icons/fa";
 import { loginUser } from "../../services/authService";
 
+const normalizeRole = (role) => {
+  const normalized = String(role || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+
+  if (normalized === "manager" || normalized === "inventory") {
+    return "inventory-manager";
+  }
+
+  return normalized;
+};
+
 function Login() {
   const navigate = useNavigate();
 
@@ -30,10 +43,19 @@ function Login() {
 
     try {
       const data = await loginUser(formData);
+      const role = normalizeRole(data.user?.role);
+      const user = { ...data.user, role };
+      const dashboardPath = {
+        cashier: "/cashier/dashboard",
+        "inventory-manager": "/manager/dashboard",
+        admin: "/admin/dashboard",
+      }[role];
+
       localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("user", JSON.stringify(user));
       setMessage("Login successful");
-      navigate("/");
+
+      navigate(dashboardPath || "/login");
     } catch (error) {
       setMessage(error.response?.data?.message || "Login failed");
     }

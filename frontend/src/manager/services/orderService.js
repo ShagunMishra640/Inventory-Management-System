@@ -26,6 +26,15 @@ export const updateOrder = async (id, orderData) => {
 
 // Delete Order
 export const deleteOrder = async (id) => {
-  const response = await API.delete(`/orders/${id}`);
-  return response.data;
+  try {
+    const response = await API.delete(`/orders/${id}`);
+    return response.data;
+  } catch (error) {
+    if ([404, 405].includes(error.response?.status)) {
+      const response = await API.delete(`/orders/delete/${id}`);
+      return response.data;
+    }
+
+    throw error;
+  }
 };

@@ -36,6 +36,50 @@ const formatCurrency = (value) =>
     maximumFractionDigits: 0,
   }).format(Number(value || 0));
 
+const productImageFallbacks = {
+  laptop:
+    "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=240&q=80",
+  mobile:
+    "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=240&q=80",
+  keyboard:
+    "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?auto=format&fit=crop&w=240&q=80",
+  electronics:
+    "https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=240&q=80",
+  default:
+    "https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?auto=format&fit=crop&w=240&q=80",
+};
+
+const apiAssetOrigin = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5000")
+  .replace(/\/api\/?$/, "")
+  .replace(/\/$/, "");
+
+const getFallbackProductImage = (product) => {
+  const text = `${product.name || ""} ${product.category || ""}`.toLowerCase();
+
+  if (text.includes("keyboard")) return productImageFallbacks.keyboard;
+  if (text.includes("mobile") || text.includes("phone")) return productImageFallbacks.mobile;
+  if (text.includes("laptop")) return productImageFallbacks.laptop;
+  if (text.includes("electronic")) return productImageFallbacks.electronics;
+
+  return productImageFallbacks.default;
+};
+
+const resolveProductImage = (product) => {
+  const rawImage = String(product.image || "").trim();
+
+  if (/^(https?:|data:|blob:)/i.test(rawImage)) return rawImage;
+
+  if (rawImage.startsWith("/uploads/") || rawImage.startsWith("uploads/")) {
+    return `${apiAssetOrigin}/${rawImage.replace(/^\/+/, "")}`;
+  }
+
+  if (/\.(png|jpe?g|webp|gif|svg)$/i.test(rawImage)) {
+    return `${apiAssetOrigin}/uploads/${rawImage.replace(/^\/+/, "")}`;
+  }
+
+  return getFallbackProductImage(product);
+};
+
 const getProductStatus = (product) => {
   const stock = Number(product.stock || product.quantity || 0);
 
@@ -86,9 +130,8 @@ const Products = () => {
       products.map((product, index) => ({
         ...product,
         displayId: product.sku || `#P${String(index + 1).padStart(3, "0")}`,
-        image:
-          product.image ||
-          "https://images.unsplash.com/photo-1517336714739-489689fd1ca8?w=200",
+        image: resolveProductImage(product),
+        fallbackImage: getFallbackProductImage(product),
         price: formatCurrency(product.sellingPrice),
         stock: Number(product.stock || product.quantity || 0),
         status: getProductStatus(product),
@@ -526,7 +569,10 @@ const Products = () => {
                           <img
                             src={product.image}
                             alt={product.name}
-                            className="w-20 h-20 rounded-xl object-cover"
+                            onError={(event) => {
+                              event.currentTarget.src = product.fallbackImage;
+                            }}
+                            className="w-20 h-20 rounded-xl object-cover bg-slate-100"
                           />
 
                           <div>

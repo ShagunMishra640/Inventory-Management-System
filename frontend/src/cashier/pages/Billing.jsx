@@ -42,6 +42,8 @@ function Billing() {
   const [paymentReference, setPaymentReference] = useState("");
   const [transactionId, setTransactionId] = useState("");
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [razorpayQr, setRazorpayQr] = useState(null);
+  const [qrLoading, setQrLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -100,6 +102,7 @@ function Billing() {
   useEffect(() => {
     if (!selectedCustomer) {
       setPaymentReference("");
+      setRazorpayQr(null);
       return;
     }
 
@@ -191,14 +194,64 @@ function Billing() {
   const discount = Math.min(subtotal, Math.max(0, offerDiscount + Number(manualDiscount || 0)));
   const total = subtotal + gst - discount;
   const isOnlinePayment = paymentMethod === "UPI" || paymentMethod === "CARD";
+  const isRazorpayPayment = paymentMethod === "UPI" && onlineProvider === "RAZORPAY";
   const upiPaymentUrl = createUpiPaymentUrl(total, paymentReference);
+
+  useEffect(() => {
+    setRazorpayQr(null);
+    setPaymentConfirmed(false);
+  }, [total, onlineProvider, paymentMethod]);
 
   const generateTransactionId = () => {
     const prefix = paymentMethod === "CARD" ? "CARD" : onlineProvider;
     const nextReference = `${prefix}-${Date.now()}`;
     setPaymentReference(nextReference);
     setTransactionId(nextReference);
+    setRazorpayQr(null);
     setPaymentConfirmed(false);
+  };
+
+  const createRazorpayQr = async () => {
+    setError("");
+    setMessage("");
+
+    if (!selectedCustomer) {
+      setError("Please select a customer before creating Razorpay QR.");
+      return;
+    }
+
+    if (!cart.length || total <= 0) {
+      setError("Add products to the cart before creating Razorpay QR.");
+      return;
+    }
+
+    const reference = paymentReference || createPaymentReference(selectedCustomer);
+    setPaymentReference(reference);
+    setQrLoading(true);
+    setPaymentConfirmed(false);
+
+    try {
+      const response = await API.post(CASHIER_ENDPOINTS.RAZORPAY_QR_CREATE, {
+        amount: total,
+        paymentReference: reference,
+        customerName:
+          selectedCustomerData?.name ||
+          selectedCustomerData?.fullName ||
+          "Walk-in customer",
+      });
+      const qrCode = response.data?.qrCode;
+
+      setRazorpayQr(qrCode);
+      setTransactionId(qrCode?.id || reference);
+      setMessage("Razorpay payment scanner generated for this bill.");
+    } catch (err) {
+      setRazorpayQr(null);
+      setError(
+        err.response?.data?.message || err.message || "Unable to create Razorpay QR",
+      );
+    } finally {
+      setQrLoading(false);
+    }
   };
 
   const checkout = async () => {
@@ -222,6 +275,11 @@ function Billing() {
 
     if (isOnlinePayment && !(transactionId.trim() || paymentReference)) {
       setError("Payment reference could not be generated.");
+      return;
+    }
+
+    if (isRazorpayPayment && !razorpayQr?.id) {
+      setError("Create the Razorpay QR before generating the bill.");
       return;
     }
 
@@ -252,6 +310,14 @@ function Billing() {
         paymentMethod: paymentMethod.toUpperCase(),
         transactionId: isOnlinePayment ? transactionId.trim() || paymentReference : "",
         paymentReference,
+        paymentGateway: isRazorpayPayment
+          ? "RAZORPAY"
+          : paymentMethod === "CARD"
+            ? "CARD"
+            : isOnlinePayment
+              ? onlineProvider
+              : "",
+        gatewayQrId: razorpayQr?.id || "",
         paymentStatus: "SUCCESS",
       };
 
@@ -262,6 +328,7 @@ function Billing() {
       setSelectedCustomer("");
       setPaymentReference("");
       setTransactionId("");
+      setRazorpayQr(null);
       setPaymentConfirmed(false);
     } catch (err) {
       setError(
@@ -344,6 +411,7 @@ function Billing() {
                   setSelectedCustomer(customerId);
                   setPaymentReference(customerId ? createPaymentReference(customerId) : "");
                   setTransactionId("");
+                  setRazorpayQr(null);
                   setPaymentConfirmed(false);
                 }}
                 className="border rounded-2xl px-4 py-3 w-full"
@@ -360,6 +428,7 @@ function Billing() {
                 onChange={(e) => {
                   setPaymentMethod(e.target.value);
                   setTransactionId("");
+                  setRazorpayQr(null);
                   setPaymentConfirmed(false);
                 }}
                 className="border rounded-2xl px-4 py-3 w-full"
@@ -401,11 +470,17 @@ function Billing() {
                   </label>
                   <select
                     value={onlineProvider}
-                    onChange={(e) => setOnlineProvider(e.target.value)}
+                    onChange={(e) => {
+                      setOnlineProvider(e.target.value);
+                      setTransactionId("");
+                      setRazorpayQr(null);
+                      setPaymentConfirmed(false);
+                    }}
                     disabled={paymentMethod === "CARD"}
                     className="mt-2 w-full rounded-2xl border border-indigo-100 bg-white px-4 py-3"
                   >
                     <option value="UPI">UPI</option>
+                    <option value="RAZORPAY">Razorpay QR</option>
                     <option value="PHONEPE">PhonePe</option>
                     <option value="GPAY">Google Pay</option>
                     <option value="PAYTM">Paytm</option>
@@ -432,6 +507,16 @@ function Billing() {
                 >
                   Generate Reference
                 </button>
+                {isRazorpayPayment ? (
+                  <button
+                    type="button"
+                    onClick={createRazorpayQr}
+                    disabled={qrLoading}
+                    className="rounded-2xl bg-slate-900 px-5 py-3 font-semibold text-white disabled:opacity-50"
+                  >
+                    {qrLoading ? "Creating QR..." : "Create Razorpay QR"}
+                  </button>
+                ) : null}
               </div>
 
               <label className="mt-4 flex items-center gap-3 text-sm font-semibold text-slate-700">
@@ -525,17 +610,27 @@ function Billing() {
           <div className="rounded-3xl border border-indigo-100 bg-indigo-50 p-5">
             <div className="flex flex-col items-center gap-4 text-center">
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <QRCode
-                  value={upiPaymentUrl}
-                  size={176}
-                  className="h-44 w-44"
-                  title="UPI payment QR code"
-                />
+                {razorpayQr?.image_url ? (
+                  <img
+                    src={razorpayQr.image_url}
+                    alt="Razorpay payment QR code"
+                    className="h-44 w-44 object-contain"
+                  />
+                ) : (
+                  <QRCode
+                    value={upiPaymentUrl}
+                    size={176}
+                    className="h-44 w-44"
+                    title="UPI payment QR code"
+                  />
+                )}
               </div>
               <div className="w-full space-y-3">
                 <div>
                   <p className="text-sm font-semibold text-slate-500">Payment Scanner</p>
-                  <h3 className="text-xl font-bold text-slate-900">Scan and Pay</h3>
+                  <h3 className="text-xl font-bold text-slate-900">
+                    {razorpayQr?.image_url ? "Razorpay Scan and Pay" : "Scan and Pay"}
+                  </h3>
                 </div>
                 <div className="rounded-2xl bg-white p-4 text-left text-sm text-slate-700">
                   <p>
@@ -554,12 +649,20 @@ function Billing() {
                     <span className="font-semibold">Payment Ref:</span>{" "}
                     {paymentReference || "Auto generated"}
                   </p>
+                  {razorpayQr?.id ? (
+                    <p>
+                      <span className="font-semibold">Razorpay QR:</span>{" "}
+                      {razorpayQr.id}
+                    </p>
+                  ) : null}
                   <p>
                     <span className="font-semibold">Amount:</span> ₹{total}
                   </p>
                 </div>
                 <p className="text-sm text-slate-500">
-                  Customer can scan this code after products are added to the bill.
+                  {isRazorpayPayment
+                    ? "Create a Razorpay QR after products are added, then confirm payment before billing."
+                    : "Customer can scan this code after products are added to the bill."}
                 </p>
               </div>
             </div>

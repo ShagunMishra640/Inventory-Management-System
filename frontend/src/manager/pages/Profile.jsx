@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
-import { getProfile, updateProfile } from "../services/profileService";
+import { getProfile, getProfileActivities, updateProfile } from "../services/profileService";
+import exportReport from "../utils/exportReport";
 
 import {
   FaBell,
@@ -20,52 +21,92 @@ import {
   FaDownload,
 } from "react-icons/fa";
 
-const activities = [
+const fallbackActivities = [
   {
-    title: "Updated Inventory",
+    title: "Reviewed Stock Levels",
     time: "2 hours ago",
-    icon: <FaBoxes />,
+    iconType: "boxes",
     color: "bg-blue-100 text-blue-600",
+    description: "Latest stock quantities reviewed for inventory accuracy.",
+    module: "Inventory",
+    status: "Completed",
   },
 
   {
-    title: "Approved Orders",
+    title: "Approved Purchase Order",
     time: "5 hours ago",
-    icon: <FaClipboardList />,
+    iconType: "clipboard",
     color: "bg-green-100 text-green-600",
+    description: "Recent purchase order checked and prepared for supplier follow-up.",
+    module: "Purchase Orders",
+    status: "Pending",
   },
 
   {
-    title: "Generated Sales Report",
+    title: "Generated Inventory Report",
     time: "1 day ago",
-    icon: <FaChartLine />,
+    iconType: "chart",
     color: "bg-purple-100 text-purple-600",
+    description: "Inventory summary report generated from backend stock records.",
+    module: "Reports",
+    status: "Generated",
   },
 
   {
-    title: "Checked Stock Alerts",
+    title: "Checked Low Stock Alerts",
     time: "2 days ago",
-    icon: <FaCheckCircle />,
+    iconType: "check",
     color: "bg-orange-100 text-orange-600",
+    description: "Low stock products reviewed against minimum stock limits.",
+    module: "Low Stock",
+    status: "Healthy",
   },
 ];
+
+const activityIcons = {
+  boxes: <FaBoxes />,
+  clipboard: <FaClipboardList />,
+  chart: <FaChartLine />,
+  check: <FaCheckCircle />,
+};
+
+const activityColors = {
+  blue: "bg-blue-100 text-blue-600",
+  green: "bg-green-100 text-green-600",
+  purple: "bg-purple-100 text-purple-600",
+  orange: "bg-orange-100 text-orange-600",
+};
 
 const fallbackProfile = {
   name: "Rutika Pujari",
   email: "rpujari5000@gmail.com",
   phone: "+91 9876543210",
   location: "Solapur, Maharashtra",
-  title: "Inventory Management Admin",
+  title: "Inventory Manager",
   role: "inventory-manager",
-  bio: "Experienced inventory management administrator specializing in stock tracking, warehouse optimization, sales analytics and order management. Skilled in React JS, Tailwind CSS and MERN stack technologies for creating modern dashboard systems.",
-  skills: ["React JS", "Tailwind CSS"],
+  bio: "Inventory manager focused on stock accuracy, purchase planning, supplier coordination, low-stock control and smooth order fulfillment. Experienced in monitoring inventory movement, maintaining warehouse discipline and preparing clear inventory reports for daily operations.",
+  skills: ["Stock Control", "Purchase Planning", "Supplier Coordination", "Inventory Reporting"],
   avatar: "/Rutika.jpg.jpeg",
 };
 
 const roleLabel = {
   admin: "Admin",
-  cashier: "Cashier",
+  cashier: "Manager",
   "inventory-manager": "Inventory Manager",
+};
+
+const makeManagerProfile = (user = {}) => {
+  const role = user.role === "cashier" ? "inventory-manager" : user.role || fallbackProfile.role;
+  const userTitle = String(user.title || "").trim();
+
+  return {
+    ...fallbackProfile,
+    ...user,
+    role,
+    title: userTitle && userTitle.toLowerCase() !== "cashier" ? userTitle : roleLabel[role] || fallbackProfile.title,
+    skills: user.skills?.length ? user.skills : fallbackProfile.skills,
+    avatar: user.avatar || fallbackProfile.avatar,
+  };
 };
 
 const Profile = () => {
@@ -76,6 +117,7 @@ const Profile = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [activities, setActivities] = useState(fallbackActivities);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -83,34 +125,34 @@ const Profile = () => {
         setIsLoading(true);
         setError("");
         const user = await getProfile();
-        const mergedProfile = {
-          ...fallbackProfile,
-          ...user,
-          title: user.title || roleLabel[user.role] || fallbackProfile.title,
-          skills: user.skills?.length ? user.skills : fallbackProfile.skills,
-          avatar: user.avatar || fallbackProfile.avatar,
-        };
+        const mergedProfile = makeManagerProfile(user);
         setProfile(mergedProfile);
         setFormData(mergedProfile);
         localStorage.setItem("user", JSON.stringify(user));
-      } catch (err) {
+      } catch {
         const storedUser = JSON.parse(localStorage.getItem("user") || "null");
-        if (storedUser) {
-          const mergedProfile = {
-            ...fallbackProfile,
-            ...storedUser,
-            title: storedUser.title || roleLabel[storedUser.role] || fallbackProfile.title,
-          };
-          setProfile(mergedProfile);
-          setFormData(mergedProfile);
-        }
-        setError(err?.response?.data?.message || err.message || "Profile load failed");
+        const mergedProfile = makeManagerProfile(storedUser || fallbackProfile);
+        setProfile(mergedProfile);
+        setFormData(mergedProfile);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadProfile();
+  }, []);
+
+  useEffect(() => {
+    const loadActivities = async () => {
+      try {
+        const backendActivities = await getProfileActivities();
+        setActivities(backendActivities.length ? backendActivities : fallbackActivities);
+      } catch {
+        setActivities(fallbackActivities);
+      }
+    };
+
+    loadActivities();
   }, []);
 
   const handleChange = (event) => {
@@ -131,6 +173,24 @@ const Profile = () => {
     setIsEditing(false);
   };
 
+  const handleViewActivity = (activity) => {
+    setError("");
+    setMessage(`${activity.title}: ${activity.description || activity.module || "Activity details loaded."}`);
+  };
+
+  const handleExportActivities = () => {
+    exportReport(
+      activities.map((activity) => ({
+        title: activity.title,
+        module: activity.module,
+        status: activity.status,
+        time: activity.time,
+        description: activity.description,
+      })),
+      "manager-profile-activities.csv"
+    );
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -139,13 +199,7 @@ const Profile = () => {
       setError("");
       setMessage("");
       const updatedUser = await updateProfile(formData);
-      const updatedProfile = {
-        ...profile,
-        ...updatedUser,
-        title: updatedUser.title || roleLabel[updatedUser.role] || profile.title,
-        skills: updatedUser.skills?.length ? updatedUser.skills : profile.skills,
-        avatar: updatedUser.avatar || profile.avatar,
-      };
+      const updatedProfile = makeManagerProfile({ ...profile, ...updatedUser });
       setProfile(updatedProfile);
       setFormData(updatedProfile);
       localStorage.setItem("user", JSON.stringify(updatedUser));
@@ -278,7 +332,7 @@ const Profile = () => {
 
           {/* GRID */}
 
-          <div className="grid grid-cols-3 gap-8">
+          <div className="space-y-8">
 
             {/* LEFT SIDE */}
 
@@ -308,7 +362,7 @@ const Profile = () => {
                 </h2>
 
                 <p className="text-blue-600 text-xl font-semibold mt-2">
-                  {profile.title || roleLabel[profile.role] || "Inventory Management Admin"}
+                  {profile.title || roleLabel[profile.role] || "Manager"}
                 </p>
 
                 <div className="flex justify-center gap-4 mt-6">
@@ -434,7 +488,7 @@ const Profile = () => {
 
             {/* RIGHT SIDE */}
 
-            <div className="col-span-2 space-y-8">
+            <div className="space-y-8">
 
               {/* ABOUT */}
 
@@ -483,7 +537,7 @@ const Profile = () => {
                   </h1>
 
                   <p className="text-gray-500 mt-3 text-lg">
-                    Products
+                    Stock Items
                   </p>
                 </div>
 
@@ -500,7 +554,7 @@ const Profile = () => {
                   </h1>
 
                   <p className="text-gray-500 mt-3 text-lg">
-                    Orders
+                    Orders Managed
                   </p>
                 </div>
 
@@ -513,11 +567,11 @@ const Profile = () => {
                   </div>
 
                   <h1 className="text-5xl font-bold">
-                    ₹8.5L
+                    98%
                   </h1>
 
                   <p className="text-gray-500 mt-3 text-lg">
-                    Revenue
+                    Stock Accuracy
                   </p>
                 </div>
 
@@ -530,11 +584,11 @@ const Profile = () => {
                   </div>
 
                   <h1 className="text-5xl font-bold">
-                    4.9
+                    24
                   </h1>
 
                   <p className="text-gray-500 mt-3 text-lg">
-                    Rating
+                    Suppliers
                   </p>
                 </div>
               </div>
@@ -557,7 +611,11 @@ const Profile = () => {
 
                   </div>
 
-                  <button className="bg-blue-100 text-blue-700 px-5 py-3 rounded-xl font-semibold flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleExportActivities}
+                    className="bg-blue-100 text-blue-700 px-5 py-3 rounded-xl font-semibold flex items-center gap-3"
+                  >
 
                     <FaDownload />
 
@@ -576,9 +634,13 @@ const Profile = () => {
                       <div className="flex items-center gap-5">
 
                         <div
-                          className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl ${activity.color}`}
+                          className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl ${
+                            activity.color?.startsWith("bg-")
+                              ? activity.color
+                              : activityColors[activity.color] || "bg-blue-100 text-blue-600"
+                          }`}
                         >
-                          {activity.icon}
+                          {activityIcons[activity.iconType] || <FaBoxes />}
                         </div>
 
                         <div>
@@ -599,7 +661,11 @@ const Profile = () => {
                         </div>
                       </div>
 
-                      <button className="bg-white border border-gray-200 px-5 py-3 rounded-xl font-semibold hover:bg-blue-600 hover:text-white transition-all duration-300">
+                      <button
+                        type="button"
+                        onClick={() => handleViewActivity(activity)}
+                        className="bg-white border border-gray-200 px-5 py-3 rounded-xl font-semibold hover:bg-blue-600 hover:text-white transition-all duration-300"
+                      >
 
                         View
                       </button>
@@ -635,7 +701,7 @@ const Profile = () => {
                         </h4>
 
                         <p className="text-blue-600 mt-1">
-                          2026 - Present
+                          Stock operations, order tracking and supplier coordination
                         </p>
 
                       </div>
@@ -643,11 +709,11 @@ const Profile = () => {
                       <div className="border-l-4 border-purple-600 pl-5">
 
                         <h4 className="font-bold text-xl">
-                          Frontend Developer
+                          Inventory Coordinator
                         </h4>
 
                         <p className="text-purple-600 mt-1">
-                          2025 - 2026
+                          Purchase planning, warehouse records and daily reporting
                         </p>
 
                       </div>
@@ -666,7 +732,7 @@ const Profile = () => {
 
                       {(profile.skills.length
                         ? profile.skills
-                        : ["React JS", "Tailwind CSS", "Inventory Management", "Sales Analytics"]
+                        : ["Stock Control", "Purchase Planning", "Supplier Coordination", "Inventory Reporting"]
                       ).map((skill, index) => (
                         <div key={index}>
 
