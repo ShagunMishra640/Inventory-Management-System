@@ -49,7 +49,10 @@ const productImageFallbacks = {
     "https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?auto=format&fit=crop&w=240&q=80",
 };
 
-const apiAssetOrigin = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5000")
+const apiAssetOrigin = (
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://inventory-management-system-b06g.onrender.com/api"
+)
   .replace(/\/api\/?$/, "")
   .replace(/\/$/, "");
 

@@ -1,5 +1,7 @@
-// Base backend URL. Vite proxies /api to the backend in development.
-export const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+// Base backend URL.
+export const BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://inventory-management-system-b06g.onrender.com/api";
 
 // API Endpoints
 export const ENDPOINTS = {

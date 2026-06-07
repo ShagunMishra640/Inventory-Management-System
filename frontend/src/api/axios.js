@@ -1,7 +1,9 @@
 import axios from "axios";
 
+const API_BASE_URL = "https://inventory-management-system-b06g.onrender.com/api";
+
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL || API_BASE_URL,
 });
 
 API.interceptors.request.use((config) => {

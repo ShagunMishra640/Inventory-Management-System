@@ -1,6 +1,25 @@
 import { Navigate } from "react-router-dom";
 
-const normalizeRole = (role) => String(role || "").trim().toLowerCase();
+const normalizeRole = (role) => {
+  const normalized = String(role || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+
+  if (normalized === "administrator" || normalized.includes("admin")) {
+    return "admin";
+  }
+
+  if (normalized.includes("manager") || normalized.includes("inventory")) {
+    return "inventory-manager";
+  }
+
+  if (normalized === "user" || normalized === "staff") {
+    return "cashier";
+  }
+
+  return normalized;
+};
 
 const getStoredUser = () => {
   try {

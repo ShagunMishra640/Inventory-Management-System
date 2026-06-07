@@ -11,8 +11,21 @@ const normalizeRole = (role) => {
     .toLowerCase()
     .replace(/\s+/g, "-");
 
-  if (normalized === "manager" || normalized === "inventory") {
+  if (normalized === "administrator" || normalized.includes("admin")) {
+    return "admin";
+  }
+
+  if (
+    normalized === "manager" ||
+    normalized === "inventory" ||
+    normalized.includes("manager") ||
+    normalized.includes("inventory")
+  ) {
     return "inventory-manager";
+  }
+
+  if (normalized === "user" || normalized === "staff") {
+    return "cashier";
   }
 
   return normalized;
@@ -63,6 +76,7 @@ function Login() {
       localStorage.setItem("user", JSON.stringify(user));
 
       const dashboardPath = {
+        admin: "/admin/dashboard",
         cashier: "/cashier/dashboard",
         "inventory-manager": "/manager/dashboard",
         manager: "/manager/dashboard",

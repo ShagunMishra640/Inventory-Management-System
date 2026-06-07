@@ -1,5 +1,7 @@
 // Cashier API endpoints matching backend route mounts
-export const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+export const BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://inventory-management-system-b06g.onrender.com/api";
 
 export const CASHIER_ENDPOINTS = {
   PRODUCTS: `${BASE_URL}/products`,

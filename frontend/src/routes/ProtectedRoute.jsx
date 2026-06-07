@@ -6,8 +6,21 @@ const normalizeRole = (role) => {
     .toLowerCase()
     .replace(/\s+/g, "-");
 
-  if (normalized === "manager" || normalized === "inventory") {
+  if (normalized === "administrator" || normalized.includes("admin")) {
+    return "admin";
+  }
+
+  if (
+    normalized === "manager" ||
+    normalized === "inventory" ||
+    normalized.includes("manager") ||
+    normalized.includes("inventory")
+  ) {
     return "inventory-manager";
+  }
+
+  if (normalized === "user" || normalized === "staff") {
+    return "cashier";
   }
 
   return normalized;
