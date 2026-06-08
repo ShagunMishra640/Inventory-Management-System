@@ -1,7 +1,11 @@
 {
+  "framework": "vite",
   "installCommand": "cd frontend && npm install",
   "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/dist",
+  "env": {
+    "VITE_API_BASE_URL": "https://inventory-management-system-b06g.onrender.com/api"
+  },
   "rewrites": [
     {
       "source": "/(.*)",
