@@ -100,8 +100,9 @@ main .grid.grid-cols-4,
 
 main .grid.grid-cols-4 > *,
 .grid.grid-cols-4 > * {
+  position: relative;
   min-width: 0;
-  overflow: visible;
+  overflow: hidden;
 }
 
 main .grid.grid-cols-4 svg,
@@ -113,11 +114,12 @@ main .grid.grid-cols-4 img,
 
 main .grid.grid-cols-4 > * {
   gap: 1rem;
+  padding-right: 6.25rem !important;
 }
 
 main .grid.grid-cols-4 > * > :first-child {
   min-width: 0;
-  max-width: calc(100% - 5.25rem);
+  max-width: 100%;
 }
 
 main .grid.grid-cols-4 > * > :first-child :is(h1, h2, h3, p, span) {
@@ -125,8 +127,22 @@ main .grid.grid-cols-4 > * > :first-child :is(h1, h2, h3, p, span) {
 }
 
 main .grid.grid-cols-4 > * > :last-child {
+  position: absolute;
+  top: 50%;
+  right: 1.5rem;
+  z-index: 0;
   flex: 0 0 auto;
-  margin-left: auto;
+  transform: translateY(-50%);
+}
+
+main .grid.grid-cols-4 > * > :first-child {
+  position: relative;
+  z-index: 1;
+}
+
+main .grid.grid-cols-4 > * > :first-child :is(.text-4xl, .text-5xl, .text-6xl) {
+  font-size: clamp(2rem, 2.25vw, 2.75rem) !important;
+  line-height: 1.05 !important;
 }
 
 main .grid.grid-cols-4 :is(h1, h2, h3, p, span),
