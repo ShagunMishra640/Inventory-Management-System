@@ -17,6 +17,7 @@ app.use("/api/settings", settingsRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/users", userManagementRoutes);
 app.use("/api/access", accessRoutes);
+app.use("/api/auth", require("./src/modules/auth/routes/authRoutes"));
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
