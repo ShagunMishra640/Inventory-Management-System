@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: inventory-management-system-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://inventory-management-system-b06g.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
