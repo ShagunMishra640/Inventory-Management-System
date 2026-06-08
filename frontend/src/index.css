@@ -62,3 +62,32 @@ table td:nth-child(5) span {
   text-align: center;
   line-height: 1.15;
 }
+
+/* Manager stock inventory table: Product ID, Product, Category, Stock, Min Stock, Value, Status, Actions. */
+table th:nth-child(7),
+table td:nth-child(7) {
+  width: 9rem;
+  min-width: 9rem;
+}
+
+table th:nth-child(8),
+table td:nth-child(8) {
+  width: 10rem;
+  min-width: 10rem;
+}
+
+table td:nth-child(7) span {
+  display: inline-flex;
+  min-width: 6.5rem;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.15;
+}
+
+table td:first-child {
+  max-width: 14rem;
+  overflow-wrap: anywhere;
+}
